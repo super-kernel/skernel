@@ -1,0 +1,32 @@
+{
+    "name": "super-kernel/skernel",
+    "description": "The skernel is a library for super-kernel.",
+    "type": "library",
+    "license": "MIT",
+    "scripts": {
+        "build": "skernel build",
+        "dev": "skernel dev",
+        "package": "skernel package"
+    },
+    "autoload": {
+        "psr-4": {
+            "SuperKernel\\Skernel\\": "src/"
+        }
+    },
+    "bin": "bin/skernel",
+    "config": {
+        "sort-packages": true
+    },
+    "minimum-stability": "stable",
+    "require": {
+        "php": "^8.4",
+        "composer-plugin-api": "^2.6.0"
+    },
+    "require-dev": {
+        "composer/composer": "^2.9",
+        "super-kernel/command": "*",
+        "super-kernel/di": "*",
+        "super-kernel/event-dispatcher": "*",
+        "super-kernel/framework": "*"
+    }
+}

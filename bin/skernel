@@ -1,0 +1,11 @@
+#!/usr/bin/env php
+<?php
+declare(strict_types=1);
+
+use SuperKernel\Contract\ApplicationInterface;
+use SuperKernel\Di\Container;
+
+include $_composer_autoload_path ?? __DIR__ . '/../vendor/autoload.php';
+
+//  TODO: Container instantiation requires loading the collector.
+new Container()->get(ApplicationInterface::class)->run();
