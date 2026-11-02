@@ -1,0 +1,59 @@
+{
+    "name": "super-kernel/skernel",
+    "description": "Toolkit for the SuperKernel framework.",
+    "type": "project",
+    "license": "MIT",
+    "require": {
+        "php": ">=8.4.27 <8.5",
+        "ext-swoole": ">=6.2.3 <6.3",
+        "psr/http-message": "^2.0",
+        "super-kernel/aop": "dev-main",
+        "super-kernel/attribute": "dev-main",
+        "super-kernel/autoloader": "dev-main",
+        "super-kernel/command": "dev-main",
+        "super-kernel/config": "dev-main",
+        "super-kernel/context": "dev-main",
+        "super-kernel/contract": "dev-main",
+        "super-kernel/di": "dev-main",
+        "super-kernel/environment": "dev-main",
+        "super-kernel/event-dispatcher": "dev-main",
+        "super-kernel/exception-dispatcher": "dev-main",
+        "super-kernel/framework": "dev-main",
+        "super-kernel/http-message": "dev-main",
+        "super-kernel/http-server": "dev-main",
+        "super-kernel/logger": "dev-main",
+        "super-kernel/process": "dev-main",
+        "super-kernel/server": "dev-main",
+        "super-kernel/swoole": "dev-main"
+    },
+    "require-dev": {
+        "friendsofphp/php-cs-fixer": "^3.95.27",
+        "phpunit/phpunit": "^13.4.5",
+        "swoole/ide-helper": "^6.2.3"
+    },
+    "autoload": {
+        "psr-4": {
+            "Src\\": "src/"
+        }
+    },
+    "autoload-dev": {
+        "psr-4": {
+            "Src\\Tests\\": "tests/"
+        }
+    },
+    "minimum-stability": "dev",
+    "prefer-stable": true,
+    "config": {
+        "classmap-authoritative": true,
+        "optimize-autoloader": true,
+        "process-timeout": 0,
+        "sort-packages": true,
+        "vendor-dir": "vendor"
+    },
+    "scripts": {
+        "format": "@php vendor/bin/php-cs-fixer fix --show-progress=bar --no-ansi",
+        "format:check": "@php vendor/bin/php-cs-fixer check --show-progress=bar --no-ansi --diff",
+        "start": "@php bin/bootstrap.php swoole:start",
+        "test": "@php vendor/bin/phpunit"
+    }
+}
