@@ -7,7 +7,7 @@
 `super-kernel/skernel` is SKernel, the command-line project tool for SuperKernel applications, filling the role that Maven plays for Java projects. It is itself built as a SuperKernel console application and is intended to be distributed as a standalone binary.
 
 > [!NOTE]
-> SKernel is under active development. It provides the `build` command; the commands that create, package, run, and clean projects and that update SKernel itself are not implemented yet. Its console also offers SKernel's `help` and `list` commands, Symfony Console's `completion` command, and the `--version` option. Binaries will be published through this repository's GitHub Releases and Packages; nothing has been published yet.
+> SKernel is under active development. It provides the `build` and `package` commands; the commands that create, run, and clean projects and that update SKernel itself are not implemented yet. Its console also offers SKernel's `help` and `list` commands, Symfony Console's `completion` command, and the `--version` option. Binaries will be published through this repository's GitHub Releases and Packages; nothing has been published yet.
 
 ## Console
 
@@ -19,27 +19,95 @@ A usage error, such as an unknown command or option, prints a short message on S
 
 Commands work on the SuperKernel application in the current directory, or in the directory given with the global `-d`/`--working-dir` option.
 
+## Configuration file
+
+Options left off the command line are read from `skernel.json` in the project's root directory, or from `skernel.json.dist` when `skernel.json` does not exist; the two files are never merged. Commit `skernel.json.dist` with the project's shared settings and keep machine-specific overrides in an ignored `skernel.json`.
+
+```json
+{
+    "$schema": "https://raw.githubusercontent.com/super-kernel/skernel/main/skernel.schema.json",
+    "php": "8.4",
+    "package": {
+        "runtime": "build/micro.sfx",
+        "output": "target/my-app",
+        "composer": "composer",
+        "dev": false,
+        "phar": false
+    }
+}
+```
+
+The keys mirror the command options: `php` applies to every command, and the `package` section to `package`. Command-line options take precedence over the file, and the file over the built-in defaults. Relative paths in the file resolve against the project's root directory, while relative paths on the command line resolve against the current directory. An unknown key or a value of the wrong type stops the command with a message that names the file and the key. [`skernel.schema.json`](skernel.schema.json) describes the file for editors that support JSON Schema.
+
+## Managed PHP
+
+SKernel runs and packages a project with a static PHP build of its own rather than with the PHP on your system. A PHP version is given as `major.minor`, such as `8.4`, which selects that branch's latest release on php.net, or as `major.minor.patch`, such as `8.4.27`. Without a version, SKernel selects the latest supported PHP release that satisfies the root package's `require.php`.
+
+The build contains the PHP extensions that the project's installation requires through `ext-*` requirements in the root manifest, in its development requirements when they are installed, and in every installed package, together with `phar`. SKernel builds it once per platform, version, and extension set with a pinned release of [static-php-cli](https://github.com/crazywhalecc/static-php-cli), producing a static PHP CLI and a micro runtime for standalone binaries, and reuses it afterwards.
+
+Everything SKernel downloads and builds lives in its home directory, `~/.skernel`, or the directory given by the `SKERNEL_HOME` environment variable:
+
+```text
+~/.skernel/
+├── cache/                       php.net release answers, refreshed daily
+├── downloads/                   verified source archives, shared by every build
+├── pkgroot/<platform>/          prebuilt libraries
+├── runtimes/<platform>/php-<version>/<extension-hash>/
+│   ├── php                      the static PHP CLI
+│   ├── micro.sfx                the micro runtime
+│   └── manifest.json
+├── tools/spc/<version>/         static-php-cli
+└── work/<job>/                  sources and build output of one build
+```
+
+The first build of a runtime needs network access and the build tools that static-php-cli requires, such as a C compiler, `perl`, `re2c`, `autoconf`, `automake`, `cmake`, `libtool`, and `gettext`. SKernel never installs system packages; when a build fails, static-php-cli's output on STDERR names what is missing, and the job's directory is kept for inspection. The static-php-cli binary is verified against its pinned SHA-256 digest before it runs, and php.net answers are cached for a day and reused when php.net cannot be reached.
+
 ## Commands
 
 ### build
 
 ```text
-build [-d|--working-dir=<dir>] [--php=<binary>]
+build [-d|--working-dir=<dir>] [--php=<version>]
 ```
 
 `build` runs a full source scan of the project and writes the build artifacts that restore-only and Phar execution load to the project's `<vendor>/.cache` directory, honouring its `config.vendor-dir`: the scan snapshots, and whatever the project's components write when the build publishes `SuperKernel\Event\ApplicationBuild`, such as the prepared proxies of `super-kernel/aop`. The project must have its dependencies installed, including `super-kernel/context` and `super-kernel/di`, and the scan covers the packages of that installation.
 
-The build runs in a separate process of the PHP binary given with `--php`, a path or a name looked up in `PATH`, by default the binary that runs SKernel. That process loads the project's own autoloader, bootstraps its container, and then publishes `ApplicationBuild` through the project's PSR-14 event dispatcher, when the project has both the event and a dispatcher, without resolving or running the application. Everything the process writes, including the project's scan diagnostics, goes to STDERR, and on success STDOUT carries one line:
+The build runs in a separate process of the managed PHP CLI. That process loads the project's own autoloader, bootstraps its container, and then publishes `ApplicationBuild` through the project's PSR-14 event dispatcher, when the project has both the event and a dispatcher, without resolving or running the application. Everything the process writes, including the project's scan diagnostics, goes to STDERR, and on success STDOUT carries one line:
 
 ```text
 Build artifacts written to /path/to/my-app/vendor/.cache.
 ```
 
-A missing project, missing dependencies, a PHP binary that is not found, or a failed build prints a short message on STDERR and exits with status 1.
+A missing project or dependencies, an invalid configuration file or `--php` value, a managed PHP that cannot be provided, or a failed build prints a short message on STDERR and exits with status 1.
+
+### package
+
+```text
+package [-d|--working-dir=<dir>] [--php=<version>] [--phar] [--dev] [--output=<path>]
+        [--composer=<binary>] [--runtime=<micro.sfx>]
+```
+
+`package` turns the project into a standalone executable binary, or into a PHAR with `--phar`. It works on a temporary copy of the project, so the project itself is not changed:
+
+1. It copies the project without its vendor directory, VCS metadata such as `.git`, its `target/` directory, and the `.env` and `.env.*` files in its root directory, which usually hold machine-local secrets; a packaged application reads its environment from the process environment.
+2. It installs the copy's dependencies from the project's `composer.lock` with the Composer binary given with `--composer`, a path or a name looked up in `PATH`, by default `composer`. Development dependencies are left out unless `--dev` is given. The project must have a `composer.lock`. Composer does not check platform requirements against the PHP that runs it, because the managed PHP is the package's platform.
+3. It runs `build` on the copy with the managed PHP of that installation.
+4. It archives the copy into a PHAR whose stub loads the copy's autoloader, obtains the application container, and runs the application, so no entry script is needed.
+5. It writes the managed micro runtime, or the file given with `--runtime`, followed by the PHAR to the output path, or only the PHAR with `--phar`, and makes the result executable.
+
+The output path is given with `--output`, or defaults to `target/<name>`, or `target/<name>.phar` with `--phar`, where `<name>` is the last segment of the root package's name, or the project directory's name when the package has none. Everything the copy's Composer, build, and archive processes write goes to STDERR, and on success STDOUT carries one line:
+
+```text
+Package written to /path/to/my-app/target/my-app.
+```
+
+A missing `composer.lock`, a runtime file that is not found, a failed installation, build, or archive, or any of the failures of `build` prints a short message on STDERR and exits with status 1.
 
 ## Requirements
 
-- PHP `>=8.4.27 <8.5`; Composer checks the required PHP extensions during installation.
+- PHP `>=8.4.27 <8.5` with the `openssl`, `phar`, and `zlib` extensions; Composer checks the required PHP extensions during installation.
+- Network access and static-php-cli's build tools the first time a managed PHP is built, as described under [Managed PHP](#managed-php).
+- Composer for `package`.
 
 ## Running from source
 
@@ -51,6 +119,7 @@ cd skernel
 composer install --no-dev
 php bin/bootstrap.php list
 php bin/bootstrap.php build -d ../my-app
+php bin/bootstrap.php package -d ../my-app
 ```
 
 ## License

@@ -11,8 +11,12 @@ use Src\Configuration\PackageConfiguration;
 use Src\Configuration\ProjectConfiguration;
 use Symfony\Component\Console\Exception\RuntimeException;
 
+use function array_keys;
+use function dirname;
+use function file_get_contents;
 use function file_put_contents;
 use function glob;
+use function json_decode;
 use function mkdir;
 use function rmdir;
 use function sys_get_temp_dir;
@@ -148,6 +152,27 @@ final class ConfigurationLoaderTest extends TestCase
         $this->expectExceptionMessageIs($this->directory . '/skernel.json does not contain valid JSON.');
 
         new ConfigurationLoader()->load($this->directory);
+    }
+
+    public function testTheSchemaDescribesExactlyTheAcceptedSettings(): void
+    {
+        $schema = json_decode((string) file_get_contents(dirname(__DIR__, 3) . '/skernel.schema.json'), true);
+
+        self::assertIsArray($schema);
+        self::assertSame([
+            '$schema',
+            'php',
+            'package',
+        ], array_keys($schema['properties']));
+        self::assertSame([
+            'runtime',
+            'output',
+            'composer',
+            'dev',
+            'phar',
+        ], array_keys($schema['properties']['package']['properties']));
+        self::assertFalse($schema['additionalProperties']);
+        self::assertFalse($schema['properties']['package']['additionalProperties']);
     }
 
     private function write(string $file, string $contents): void

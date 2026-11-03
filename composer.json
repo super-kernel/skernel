@@ -5,7 +5,10 @@
     "license": "MIT",
     "require": {
         "php": ">=8.4.27 <8.5",
-        "composer/semver": "^3.4",
+        "ext-openssl": "*",
+        "ext-phar": "*",
+        "ext-zlib": "*",
+        "composer/semver": "^3.6.0",
         "psr/log": "^3.0.2",
         "super-kernel/attribute": "dev-main",
         "super-kernel/command": "dev-main",
