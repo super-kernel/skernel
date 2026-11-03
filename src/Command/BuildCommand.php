@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace Src\Command;
 
-use Src\Build\SnapshotBuilder;
+use Src\Build\ProjectBuilder;
 use Src\Project\ProjectLocator;
 use SuperKernel\Command\Attribute\Command as AttributeCommand;
 use Symfony\Component\Console\Command\Command;
@@ -19,14 +19,14 @@ use function sprintf;
 use const PHP_BINARY;
 
 /**
- * Scans the project and writes the scan snapshots that restore-only and Phar execution need.
+ * Scans the project and writes the build artifacts that restore-only and Phar execution load.
  */
-#[AttributeCommand(name: 'build', description: 'Scan the project and write its scan snapshots')]
+#[AttributeCommand(name: 'build', description: 'Scan the project and write its build artifacts')]
 final class BuildCommand extends Command
 {
     public function __construct(
-        private readonly ProjectLocator  $projectLocator,
-        private readonly SnapshotBuilder $snapshotBuilder,
+        private readonly ProjectLocator $projectLocator,
+        private readonly ProjectBuilder $projectBuilder,
     )
     {
         parent::__construct();
@@ -38,20 +38,20 @@ final class BuildCommand extends Command
     }
 
     /**
-     * @throws RuntimeException When the project cannot be located, the scan cannot start, or the scan fails
+     * @throws RuntimeException When the project cannot be located, or the build cannot start or fails
      */
     protected function execute(InputInterface $input, OutputInterface $output): int
     {
         $project = $this->projectLocator->locate($input->getOption('working-dir'));
         $errorOutput = $output instanceof ConsoleOutputInterface ? $output->getErrorOutput() : $output;
-        $status = $this->snapshotBuilder->build($project, $input->getOption('php'), $errorOutput);
+        $status = $this->projectBuilder->build($project, $input->getOption('php'), $errorOutput);
 
         if (0 !== $status) {
-            throw new RuntimeException(sprintf('The project scan failed with exit status %d.', $status));
+            throw new RuntimeException(sprintf('The project build failed with exit status %d.', $status));
         }
 
         $output->writeln(
-            sprintf('Scan snapshots written to %s/.cache.', $project->vendorDirectory),
+            sprintf('Build artifacts written to %s/.cache.', $project->vendorDirectory),
             OutputInterface::OUTPUT_RAW,
         );
 

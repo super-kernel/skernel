@@ -21,10 +21,13 @@ use function unlink;
 use function var_export;
 
 /**
- * Writes a project's scan snapshots by bootstrapping its container, without running the application, in a separate
- * PHP process.
+ * Writes a project's build artifacts in a separate PHP process without creating or running the application.
+ *
+ * The process bootstraps the project's container, which writes its scan snapshots, then publishes
+ * `SuperKernel\Event\ApplicationBuild` so that components write the artifacts restore-only hosts load. Projects
+ * without that event or a PSR-14 dispatcher have no listener for it, so the event is skipped.
  */
-final readonly class SnapshotBuilder
+final readonly class ProjectBuilder
 {
     private const string ENTRY = <<<'PHP'
         <?php
@@ -33,15 +36,23 @@ final readonly class SnapshotBuilder
 
         require %s;
 
-        SuperKernel\Context\ApplicationContext::getContainer();
+        $container = SuperKernel\Context\ApplicationContext::getContainer();
+
+        if (
+            class_exists(SuperKernel\Event\ApplicationBuild::class)
+            && $container->has(Psr\EventDispatcher\EventDispatcherInterface::class)
+        ) {
+            $container->get(Psr\EventDispatcher\EventDispatcherInterface::class)
+                ->dispatch(new SuperKernel\Event\ApplicationBuild());
+        }
 
         PHP;
 
     /**
-     * Runs the scan in the project directory with the given PHP binary, a path or a name looked up in PATH, and
+     * Runs the build in the project directory with the given PHP binary, a path or a name looked up in PATH, and
      * forwards everything the process writes.
      *
-     * @return int The exit status of the scan process
+     * @return int The exit status of the build process
      *
      * @throws RuntimeException When the PHP binary is not found or cannot be started, or the temporary entry script
      *                          cannot be written
@@ -59,14 +70,14 @@ final readonly class SnapshotBuilder
         $entry = tempnam(sys_get_temp_dir(), 'skernel-build-');
 
         if (false === $entry) {
-            throw new RuntimeException('Unable to create the temporary scan entry script.');
+            throw new RuntimeException('Unable to create the temporary build entry script.');
         }
 
         try {
             $script = sprintf(self::ENTRY, var_export($project->vendorDirectory . '/autoload.php', true));
 
             if (false === file_put_contents($entry, $script)) {
-                throw new RuntimeException(sprintf('Unable to write the temporary scan entry script %s.', $entry));
+                throw new RuntimeException(sprintf('Unable to write the temporary build entry script %s.', $entry));
             }
 
             $process = new Process([

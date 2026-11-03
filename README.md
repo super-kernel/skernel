@@ -27,15 +27,15 @@ Commands work on the SuperKernel application in the current directory, or in the
 build [-d|--working-dir=<dir>] [--php=<binary>]
 ```
 
-`build` runs a full source scan of the project and writes the scan snapshots that restore-only and Phar execution need to the project's `<vendor>/.cache` directory, honouring its `config.vendor-dir`. The project must have its dependencies installed, including `super-kernel/context` and `super-kernel/di`, and the scan covers the packages of that installation.
+`build` runs a full source scan of the project and writes the build artifacts that restore-only and Phar execution load to the project's `<vendor>/.cache` directory, honouring its `config.vendor-dir`: the scan snapshots, and whatever the project's components write when the build publishes `SuperKernel\Event\ApplicationBuild`, such as the prepared proxies of `super-kernel/aop`. The project must have its dependencies installed, including `super-kernel/context` and `super-kernel/di`, and the scan covers the packages of that installation.
 
-The scan runs in a separate process of the PHP binary given with `--php`, a path or a name looked up in `PATH`, by default the binary that runs SKernel. That process loads the project's own autoloader and bootstraps its container without resolving or running the application. Everything the process writes, including the project's scan diagnostics, goes to STDERR, and on success STDOUT carries one line:
+The build runs in a separate process of the PHP binary given with `--php`, a path or a name looked up in `PATH`, by default the binary that runs SKernel. That process loads the project's own autoloader, bootstraps its container, and then publishes `ApplicationBuild` through the project's PSR-14 event dispatcher, when the project has both the event and a dispatcher, without resolving or running the application. Everything the process writes, including the project's scan diagnostics, goes to STDERR, and on success STDOUT carries one line:
 
 ```text
-Scan snapshots written to /path/to/my-app/vendor/.cache.
+Build artifacts written to /path/to/my-app/vendor/.cache.
 ```
 
-A missing project, missing dependencies, a PHP binary that is not found, or a failed scan prints a short message on STDERR and exits with status 1.
+A missing project, missing dependencies, a PHP binary that is not found, or a failed build prints a short message on STDERR and exits with status 1.
 
 ## Requirements
 
