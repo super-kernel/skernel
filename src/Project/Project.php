@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace Src\Project;
 
 /**
- * A SuperKernel application directory whose Composer dependencies are installed.
+ * A SuperKernel application directory and what its composer.json declares.
  */
 final readonly class Project
 {

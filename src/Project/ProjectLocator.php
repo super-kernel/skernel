@@ -38,6 +38,37 @@ final readonly class ProjectLocator
      */
     public function locate(?string $workingDirectory): Project
     {
+        $project = $this->find($workingDirectory);
+        $installed = $project->vendorDirectory . '/composer/installed.json';
+
+        if (!is_file($project->vendorDirectory . '/autoload.php') || !is_file($installed)) {
+            throw new RuntimeException(sprintf(
+                'The project in %s has no installed dependencies; run composer install first.',
+                $project->directory,
+            ));
+        }
+
+        $missing = array_diff(self::REQUIRED_PACKAGES, $this->installedPackages(JsonFile::decode($installed)));
+
+        if ([] !== $missing) {
+            throw new RuntimeException(sprintf(
+                'The project in %s is not a SuperKernel application: %s is not installed.',
+                $project->directory,
+                implode(' and ', $missing),
+            ));
+        }
+
+        return $project;
+    }
+
+    /**
+     * Uses the given working directory, or the current one when none is given, whether or not the project's
+     * dependencies are installed.
+     *
+     * @throws RuntimeException When the directory does not exist or has no valid composer.json
+     */
+    public function find(?string $workingDirectory): Project
+    {
         $requested = $workingDirectory ?? getcwd();
         $directory = false === $requested ? false : realpath($requested);
 
@@ -52,32 +83,12 @@ final readonly class ProjectLocator
         }
 
         $manifest = JsonFile::decode($manifest);
-        $vendorDirectory = $this->vendorDirectory($directory, $manifest);
-        $installed = $vendorDirectory . '/composer/installed.json';
-
-        if (!is_file($vendorDirectory . '/autoload.php') || !is_file($installed)) {
-            throw new RuntimeException(sprintf(
-                'The project in %s has no installed dependencies; run composer install first.',
-                $directory,
-            ));
-        }
-
-        $missing = array_diff(self::REQUIRED_PACKAGES, $this->installedPackages(JsonFile::decode($installed)));
-
-        if ([] !== $missing) {
-            throw new RuntimeException(sprintf(
-                'The project in %s is not a SuperKernel application: %s is not installed.',
-                $directory,
-                implode(' and ', $missing),
-            ));
-        }
-
         $name = is_array($manifest) ? $manifest['name'] ?? null : null;
         $require = is_array($manifest) && is_array($manifest['require'] ?? null) ? $manifest['require'] : [];
 
         return new Project(
             $directory,
-            $vendorDirectory,
+            $this->vendorDirectory($directory, $manifest),
             is_string($name) ? $name : null,
             is_string($require['php'] ?? null) ? $require['php'] : null,
         );

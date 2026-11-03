@@ -201,6 +201,19 @@ final class PackageCommandTest extends TestCase
         self::assertFileExists($this->project . '/dist/demo.phar');
     }
 
+    public function testPackagesAProjectWhoseDependenciesAreNotInstalled(): void
+    {
+        Directory::remove($this->project . '/vendor');
+
+        $output = $this->package('--phar --php=' . $this->version . ' --composer=' . $this->composer(), $status);
+
+        self::assertSame(0, $status, implode("\n", $output));
+        self::assertSame([
+            'Package written to ' . $this->project . '/target/demo.phar.',
+        ], $output);
+        self::assertDirectoryDoesNotExist($this->project . '/vendor');
+    }
+
     public function testRejectsAProjectWithoutALockFile(): void
     {
         unlink($this->project . '/composer.lock');

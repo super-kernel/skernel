@@ -90,7 +90,7 @@ package [-d|--working-dir=<dir>] [--php=<version>] [--phar] [--dev] [--output=<p
 `package` 把项目做成可直接执行的独立二进制，指定 `--phar` 时则做成 PHAR。它在项目的临时副本上工作，不会改动项目本身：
 
 1. 复制项目，但不包括 vendor 目录、`.git` 等 VCS 元数据、`target/` 目录，以及根目录下的 `.env` 和 `.env.*` 文件（这些文件通常保存本机密钥）；打包后的应用从进程环境变量读取环境配置。
-2. 按项目的 `composer.lock` 为副本安装依赖，使用的 Composer 由 `--composer` 指定，可以是路径，也可以是在 `PATH` 中查找的名称，默认是 `composer`。除非指定 `--dev`，否则不安装开发依赖。项目必须有 `composer.lock`。Composer 不会按运行它的那个 PHP 检查平台要求，因为包的运行平台是受管 PHP。
+2. 按项目的 `composer.lock` 为副本安装依赖，使用的 Composer 由 `--composer` 指定，可以是路径，也可以是在 `PATH` 中查找的名称，默认是 `composer`。除非指定 `--dev`，否则不安装开发依赖。项目必须有 `composer.lock`，但项目自身不必安装依赖。Composer 不会按运行它的那个 PHP 检查平台要求，因为包的运行平台是受管 PHP。
 3. 用该次安装对应的受管 PHP 对副本运行 `build`。
 4. 把副本归档为 PHAR，它的 stub 加载副本的 autoloader、获取应用容器并运行应用，因此不需要入口脚本。
 5. 把受管 micro 运行时（或 `--runtime` 指定的文件）和 PHAR 依次写入输出路径；指定 `--phar` 时只写入 PHAR。结果文件会被设为可执行。

@@ -129,6 +129,18 @@ final class ProjectLocatorTest extends TestCase
         new ProjectLocator()->locate($this->workspace);
     }
 
+    public function testFindsAProjectWhoseDependenciesAreNotInstalled(): void
+    {
+        file_put_contents($this->workspace . '/composer.json', '{"name": "acme/demo", "require": {"php": ">=8.4"}}');
+
+        $project = new ProjectLocator()->find($this->workspace);
+
+        self::assertSame($this->workspace, $project->directory);
+        self::assertSame($this->workspace . '/vendor', $project->vendorDirectory);
+        self::assertSame('acme/demo', $project->name);
+        self::assertSame('>=8.4', $project->phpRequirement);
+    }
+
     /** @throws JsonException When a fixture cannot be encoded */
     public function testRejectsAProjectThatDoesNotInstallSuperKernel(): void
     {

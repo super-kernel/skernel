@@ -84,7 +84,7 @@ final class PackageCommand extends Command
      */
     protected function execute(InputInterface $input, OutputInterface $output): int
     {
-        $project = $this->projectLocator->locate($input->getOption('working-dir'));
+        $project = $this->projectLocator->find($input->getOption('working-dir'));
         $settings = $this->configurationLoader->load($project->directory);
         $configuration = $settings->package;
         $workingDirectory = (string) getcwd();
