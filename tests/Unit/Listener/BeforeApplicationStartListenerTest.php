@@ -37,7 +37,11 @@ final class BeforeApplicationStartListenerTest extends TestCase
 
         $listener->process(new BeforeApplicationStart($application));
 
+        $workingDirectory = $application->getDefinition()->getOption('working-dir');
+
         self::assertSame('SKernel', $application->getName());
+        self::assertSame('d', $workingDirectory->getShortcut());
+        self::assertTrue($workingDirectory->isValueRequired());
         self::assertSame($helpCommand, $application->get('help'));
         self::assertSame($listCommand, $application->get('list'));
         self::assertTrue($application->has('completion'));

@@ -16,7 +16,8 @@
         "super-kernel/exception-dispatcher": "dev-main",
         "super-kernel/framework": "dev-main",
         "super-kernel/logger": "dev-main",
-        "symfony/console": "^8.1.9"
+        "symfony/console": "^8.1.9",
+        "symfony/process": "^8.1.10"
     },
     "require-dev": {
         "friendsofphp/php-cs-fixer": "^3.95.27",
