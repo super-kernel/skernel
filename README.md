@@ -15,6 +15,8 @@ Running SKernel without a command, or with `list`, prints the SKernel logo above
 
 SKernel writes log records of WARNING and above, including the framework's scan summaries and exception reports, to STDERR, so STDOUT carries only command output; for example, `list --format=json` writes plain JSON to STDOUT.
 
+A usage error, such as an unknown command or option, prints a short message on STDERR, followed by the running command's synopsis when a command's input is invalid, and exits with status 1. Add `-v` to also print the exception class and trace.
+
 ## Requirements
 
 - PHP `>=8.4.27 <8.5`; Composer checks the required PHP extensions during installation.
