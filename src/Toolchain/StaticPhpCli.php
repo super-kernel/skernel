@@ -12,25 +12,59 @@ use Symfony\Component\Console\Output\OutputInterface;
 use Throwable;
 
 use function chmod;
+use function escapeshellarg;
+use function exec;
 use function is_file;
 use function rename;
 use function sprintf;
 use function str_ends_with;
 use function str_starts_with;
+use function strlen;
+use function substr;
 use function uniqid;
 use function unlink;
 
 /**
  * Runs the pinned static-php-cli release, downloading and verifying its self-contained binary on first use.
  *
- * Its downloads and prebuilt libraries live in the SKERNEL home; sources and build output stay in the caller's job.
- * SKERNEL never runs its doctor command, which may try to install system packages with sudo.
+ * Its downloads and packages live in the SKERNEL home; sources and build output stay in the caller's job. On Linux it
+ * builds statically linked musl binaries with a pinned Zig release, which is verified and installed into its package
+ * root before the first run, so no system toolchain has to be installed with sudo. SKERNEL never runs its doctor
+ * command, which may try to install system packages with sudo.
  */
 final readonly class StaticPhpCli
 {
     private const string VERSION = '2.8.5';
 
     private const string RELEASES = 'https://github.com/crazywhalecc/static-php-cli/releases/download/';
+
+    /** The Zig release that static-php-cli VERSION builds with */
+    private const string ZIG = '0.16.0';
+
+    private const string ZIG_RELEASES = 'https://ziglang.org/download/';
+
+    /** @var array<string, array{string, string}> Zig archive and SHA-256 digest by Linux platform */
+    private const array ZIG_ASSETS = [
+        'linux-aarch64' => [
+            'zig-aarch64-linux-0.16.0.tar.xz',
+            'ea4b09bfb22ec6f6c6ceac57ab63efb6b46e17ab08d21f69f3a48b38e1534f17',
+        ],
+        'linux-x86_64' => [
+            'zig-x86_64-linux-0.16.0.tar.xz',
+            '70e49664a74374b48b51e6f3fdfbf437f6395d42509050588bd49abe52ba3d00',
+        ],
+    ];
+
+    /** @var list<string> The files static-php-cli requires of an installed Zig */
+    private const array ZIG_FILES = [
+        'zig',
+        'zig-cc',
+        'zig-c++',
+        'zig-ar',
+        'zig-ld.lld',
+        'zig-ranlib',
+        'zig-objcopy',
+    ];
 
     /** @var array<string, array{string, string}> Release asset and SHA-256 digest by platform */
     private const array ASSETS = [
@@ -72,7 +106,7 @@ final readonly class StaticPhpCli
      *
      * @return int The exit status of static-php-cli
      *
-     * @throws RuntimeException When the platform is unsupported or the binary cannot be installed or started
+     * @throws RuntimeException When the platform is unsupported, or the binary or Zig cannot be installed or started
      */
     public function run(array $arguments, string $job, OutputInterface $output): int
     {
@@ -118,14 +152,78 @@ final readonly class StaticPhpCli
             }
         }
 
-        return ProcessRunner::run([
-            $executable,
-            ...$arguments,
-        ], $job, $output, sprintf('static-php-cli %s', self::VERSION), [
+        $environment = [
             'BUILD_ROOT_PATH' => $job . '/buildroot',
             'DOWNLOAD_PATH'   => $home . '/downloads',
             'PKG_ROOT_PATH'   => $home . '/pkgroot/' . $platform,
             'SOURCE_PATH'     => $job . '/source',
-        ]);
+        ];
+
+        if (isset(self::ZIG_ASSETS[$platform])) {
+            $environment['SPC_TARGET'] = 'native-native-musl';
+            $this->installZig($executable, $platform, $job, $environment, $output);
+        }
+
+        return ProcessRunner::run([
+            $executable,
+            ...$arguments,
+        ], $job, $output, sprintf('static-php-cli %s', self::VERSION), $environment);
+    }
+
+    /**
+     * Installs the pinned Zig release into the package root through static-php-cli, which adds its compiler wrappers,
+     * unless that release is installed already.
+     *
+     * @param array<string, string> $environment
+     *
+     * @throws RuntimeException When Zig cannot be downloaded, verified, or installed
+     */
+    private function installZig(
+        string          $executable,
+        string          $platform,
+        string          $job,
+        array           $environment,
+        OutputInterface $output,
+    ): void
+    {
+        $directory = $environment['PKG_ROOT_PATH'] . '/zig';
+        $installed = true;
+
+        foreach (self::ZIG_FILES as $file) {
+            $installed = $installed && is_file($directory . '/' . $file);
+        }
+
+        if ($installed) {
+            exec(escapeshellarg($directory . '/zig') . ' version 2>/dev/null', $version, $status);
+
+            if (0 === $status && self::ZIG === ($version[0] ?? null)) {
+                return;
+            }
+        }
+
+        [$asset, $digest] = self::ZIG_ASSETS[$platform];
+        $archive = $job . '/' . $asset;
+        $package = 'zig-' . substr($platform, strlen('linux-')) . '-linux';
+        Directory::remove($directory);
+        Download::file(self::ZIG_RELEASES . self::ZIG . '/' . $asset, $archive, $digest);
+
+        try {
+            $status = ProcessRunner::run([
+                $executable,
+                'install-pkg',
+                $package,
+                '--custom-url=' . $package . ':file://' . $archive,
+            ], $job, $output, sprintf('static-php-cli %s', self::VERSION), $environment);
+        } finally {
+            @unlink($archive);
+        }
+
+        if (0 !== $status) {
+            throw new RuntimeException(sprintf(
+                'static-php-cli could not install Zig %s (exit status %d).',
+                self::ZIG,
+                $status,
+            ));
+        }
     }
 }

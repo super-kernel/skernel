@@ -65,7 +65,7 @@ final readonly class RuntimeProvider
             '--with-php=' . implode('.', array_slice(explode('.', $version), 0, 2)),
             '--for-extensions=' . $list,
             '--custom-url=php-src:https://www.php.net/distributions/php-' . $version . '.tar.xz',
-            '--prefer-pre-built',
+            '--retry=2',
         ], $job, $output);
 
         if (0 !== $status) {
