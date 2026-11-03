@@ -51,7 +51,8 @@ final readonly class ProjectLocator
             throw new RuntimeException(sprintf('No composer.json found in %s.', $directory));
         }
 
-        $vendorDirectory = $this->vendorDirectory($directory, JsonFile::decode($manifest));
+        $manifest = JsonFile::decode($manifest);
+        $vendorDirectory = $this->vendorDirectory($directory, $manifest);
         $installed = $vendorDirectory . '/composer/installed.json';
 
         if (!is_file($vendorDirectory . '/autoload.php') || !is_file($installed)) {
@@ -71,7 +72,15 @@ final readonly class ProjectLocator
             ));
         }
 
-        return new Project($directory, $vendorDirectory);
+        $name = is_array($manifest) ? $manifest['name'] ?? null : null;
+        $require = is_array($manifest) && is_array($manifest['require'] ?? null) ? $manifest['require'] : [];
+
+        return new Project(
+            $directory,
+            $vendorDirectory,
+            is_string($name) ? $name : null,
+            is_string($require['php'] ?? null) ? $require['php'] : null,
+        );
     }
 
     private function vendorDirectory(string $directory, mixed $manifest): string

@@ -6,6 +6,12 @@ namespace Src\Tests;
 
 use JsonException;
 use PHPUnit\Framework\TestCase;
+use Src\Filesystem\Directory;
+use Src\Project\ProjectLocator;
+use Src\Toolchain\Extensions;
+use Src\Toolchain\Home;
+use Src\Toolchain\RuntimeProvider;
+use Src\Toolchain\StaticPhpCli;
 
 use function array_filter;
 use function dirname;
@@ -15,10 +21,20 @@ use function exec;
 use function file_get_contents;
 use function implode;
 use function json_decode;
+use function mkdir;
 use function preg_replace;
+use function putenv;
+use function symlink;
+use function sys_get_temp_dir;
+use function tempnam;
+use function touch;
+use function unlink;
 
 use const JSON_THROW_ON_ERROR;
 use const PHP_BINARY;
+use const PHP_MAJOR_VERSION;
+use const PHP_MINOR_VERSION;
+use const PHP_RELEASE_VERSION;
 
 final class BootstrapTest extends TestCase
 {
@@ -74,16 +90,56 @@ final class BootstrapTest extends TestCase
         self::assertStringNotContainsString('[INFO]', implode("\n", $output));
     }
 
-    public function testBuildWritesTheBuildArtifactsOfTheProject(): void
+    public function testBuildWritesTheBuildArtifactsOfTheProjectWithItsManagedPhp(): void
     {
         $root = dirname(__DIR__);
-        $output = $this->bootstrap('build -d ' . escapeshellarg($root), $status, '2>/dev/null');
+        $home = tempnam(sys_get_temp_dir(), 'skernel-home-');
+        self::assertIsString($home);
+        self::assertTrue(unlink($home));
+        putenv('SKERNEL_HOME=' . $home);
+        $version = PHP_MAJOR_VERSION . '.' . PHP_MINOR_VERSION . '.' . PHP_RELEASE_VERSION;
 
-        self::assertSame(0, $status);
-        self::assertSame([
-            'Build artifacts written to ' . $root . '/vendor/.cache.',
-        ], $output);
-        self::assertFileExists($root . '/vendor/.cache/packages.ser');
+        try {
+            // Provision the managed runtime with the running PHP so that the build neither downloads nor compiles.
+            $runtime = new RuntimeProvider(new Home(), new StaticPhpCli(new Home()))->directory(
+                $version,
+                Extensions::required(new ProjectLocator()->locate($root)),
+            );
+            self::assertTrue(mkdir($runtime, 0o700, true));
+            self::assertTrue(symlink(PHP_BINARY, $runtime . '/php'));
+            self::assertTrue(touch($runtime . '/micro.sfx') && touch($runtime . '/manifest.json'));
+
+            $output = $this->bootstrap(
+                'build --php=' . $version . ' -d ' . escapeshellarg($root),
+                $status,
+                '2>/dev/null',
+                'SKERNEL_HOME=' . escapeshellarg($home),
+            );
+
+            self::assertSame(0, $status);
+            self::assertSame([
+                'Build artifacts written to ' . $root . '/vendor/.cache.',
+            ], $output);
+            self::assertFileExists($root . '/vendor/.cache/packages.ser');
+        } finally {
+            putenv('SKERNEL_HOME');
+            Directory::remove($home);
+        }
+    }
+
+    public function testBuildRejectsAPhpOptionThatIsNotAVersion(): void
+    {
+        $output = $this->bootstrap(
+            'build --php=php8.4 -d ' . escapeshellarg(dirname(__DIR__)),
+            $status,
+            '2>&1 >/dev/null',
+        );
+
+        self::assertSame(1, $status);
+        self::assertStringContainsString(
+            'The --php option must be a PHP version such as 8.4 or 8.4.27.',
+            (string) preg_replace('/\s+/', ' ', implode(' ', $output)),
+        );
     }
 
     public function testBuildRejectsADirectoryWithoutAProject(): void
@@ -97,11 +153,17 @@ final class BootstrapTest extends TestCase
     }
 
     /** @return list<string> */
-    private function bootstrap(string $arguments, ?int &$status, string $redirection = '2>&1'): array
+    private function bootstrap(
+        string $arguments,
+        ?int  &$status,
+        string $redirection = '2>&1',
+        string $environment = '',
+    ): array
     {
         $bootstrap = escapeshellarg(dirname(__DIR__) . '/bin/bootstrap.php');
+        $command = escapeshellarg(PHP_BINARY) . ' ' . $bootstrap . ' ' . $arguments . ' ' . $redirection;
 
-        exec(escapeshellarg(PHP_BINARY) . ' ' . $bootstrap . ' ' . $arguments . ' ' . $redirection, $output, $status);
+        exec(('' === $environment ? '' : $environment . ' ') . $command, $output, $status);
 
         return $output;
     }

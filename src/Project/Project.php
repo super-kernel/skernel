@@ -9,7 +9,16 @@ namespace Src\Project;
  */
 final readonly class Project
 {
-    public function __construct(public string $directory, public string $vendorDirectory)
+    /**
+     * @param string|null $name           The root package name from composer.json
+     * @param string|null $phpRequirement The root package's Composer requirement on php
+     */
+    public function __construct(
+        public string  $directory,
+        public string  $vendorDirectory,
+        public ?string $name,
+        public ?string $phpRequirement,
+    )
     {
     }
 }
