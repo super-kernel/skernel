@@ -2,18 +2,18 @@
   <strong>English</strong> | <a href="README.zh-CN.md">中文文档</a>
 </p>
 
-# SKernel
+# SKERNEL
 
-`super-kernel/skernel` is SKernel, the command-line project tool for SuperKernel applications, filling the role that Maven plays for Java projects. It is itself built as a SuperKernel console application and is intended to be distributed as a standalone binary.
+`super-kernel/skernel` is SKERNEL, the command-line project tool for SuperKernel applications, filling the role that Maven plays for Java projects. It is itself built as a SuperKernel console application and is intended to be distributed as a standalone binary.
 
 > [!NOTE]
-> SKernel is under active development. It provides the `build` and `package` commands; the commands that create, run, and clean projects and that update SKernel itself are not implemented yet. Its console also offers SKernel's `help` and `list` commands, Symfony Console's `completion` command, and the `--version` option. Binaries will be published through this repository's GitHub Releases and Packages; nothing has been published yet.
+> SKERNEL is under active development. It provides the `build` and `package` commands; the commands that create, run, and clean projects and that update SKERNEL itself are not implemented yet. Its console also offers SKERNEL's `help` and `list` commands, Symfony Console's `completion` command, and the `--version` option. Binaries will be published through this repository's GitHub Releases and Packages; nothing has been published yet.
 
 ## Console
 
-Running SKernel without a command, or with `list`, prints the SKernel logo above the plain-text overview of the available commands. The raw, JSON, XML, and Markdown listings, namespace listings, and command help omit the logo. `--version` prints `SKernel`, followed by the version when the package declares one.
+Running SKERNEL without a command, or with `list`, prints the SKERNEL logo above the plain-text overview of the available commands. The raw, JSON, XML, and Markdown listings, namespace listings, and command help omit the logo. `--version` prints `SKERNEL`, followed by the version when the package declares one.
 
-SKernel writes log records of WARNING and above, including the framework's scan summaries and exception reports, to STDERR, so STDOUT carries only command output; for example, `list --format=json` writes plain JSON to STDOUT.
+SKERNEL writes log records of WARNING and above, including the framework's scan summaries and exception reports, to STDERR, so STDOUT carries only command output; for example, `list --format=json` writes plain JSON to STDOUT.
 
 A usage error, such as an unknown command or option, prints a short message on STDERR, followed by the running command's synopsis when a command's input is invalid, and exits with status 1. Add `-v` to also print the exception class and trace.
 
@@ -41,11 +41,11 @@ The keys mirror the command options: `php` applies to every command, and the `pa
 
 ## Managed PHP
 
-SKernel runs and packages a project with a static PHP build of its own rather than with the PHP on your system. A PHP version is given as `major.minor`, such as `8.4`, which selects that branch's latest release on php.net, or as `major.minor.patch`, such as `8.4.27`. Without a version, SKernel selects the latest supported PHP release that satisfies the root package's `require.php`.
+SKERNEL runs and packages a project with a static PHP build of its own rather than with the PHP on your system. A PHP version is given as `major.minor`, such as `8.4`, which selects that branch's latest release on php.net, or as `major.minor.patch`, such as `8.4.27`. Without a version, SKERNEL selects the latest supported PHP release that satisfies the root package's `require.php`.
 
-The build contains the PHP extensions that the project's installation requires through `ext-*` requirements in the root manifest, in its development requirements when they are installed, and in every installed package, together with `phar`. SKernel builds it once per platform, version, and extension set with a pinned release of [static-php-cli](https://github.com/crazywhalecc/static-php-cli), producing a static PHP CLI and a micro runtime for standalone binaries, and reuses it afterwards.
+The build contains the PHP extensions that the project's installation requires through `ext-*` requirements in the root manifest, in its development requirements when they are installed, and in every installed package, together with `phar`. SKERNEL builds it once per platform, version, and extension set with a pinned release of [static-php-cli](https://github.com/crazywhalecc/static-php-cli), producing a static PHP CLI and a micro runtime for standalone binaries, and reuses it afterwards.
 
-Everything SKernel downloads and builds lives in its home directory, `~/.skernel`, or the directory given by the `SKERNEL_HOME` environment variable:
+Everything SKERNEL downloads and builds lives in its home directory, `~/.skernel`, or the directory given by the `SKERNEL_HOME` environment variable:
 
 ```text
 ~/.skernel/
@@ -60,7 +60,7 @@ Everything SKernel downloads and builds lives in its home directory, `~/.skernel
 └── work/<job>/                  sources and build output of one build
 ```
 
-The first build of a runtime needs network access and the build tools that static-php-cli requires, such as a C compiler, `perl`, `re2c`, `autoconf`, `automake`, `cmake`, `libtool`, and `gettext`. SKernel never installs system packages; when a build fails, static-php-cli's output on STDERR names what is missing, and the job's directory is kept for inspection. The static-php-cli binary is verified against its pinned SHA-256 digest before it runs, and php.net answers are cached for a day and reused when php.net cannot be reached.
+The first build of a runtime needs network access and the build tools that static-php-cli requires, such as a C compiler, `perl`, `re2c`, `autoconf`, `automake`, `cmake`, `libtool`, and `gettext`. SKERNEL never installs system packages; when a build fails, static-php-cli's output on STDERR names what is missing, and the job's directory is kept for inspection. The static-php-cli binary is verified against its pinned SHA-256 digest before it runs, and php.net answers are cached for a day and reused when php.net cannot be reached.
 
 ## Commands
 
@@ -111,7 +111,7 @@ A missing `composer.lock`, a runtime file that is not found, a failed installati
 
 ## Running from source
 
-Until binaries are published, run SKernel from a clone of this repository. SuperKernel detects an application's root from the working directory, so start SKernel from its own directory and select the project to work on with `-d`:
+Until binaries are published, run SKERNEL from a clone of this repository. SuperKernel detects an application's root from the working directory, so start SKERNEL from its own directory and select the project to work on with `-d`:
 
 ```bash
 git clone https://github.com/super-kernel/skernel.git
@@ -124,4 +124,4 @@ php bin/bootstrap.php package -d ../my-app
 
 ## License
 
-SKernel is released under the [MIT License](LICENSE).
+SKERNEL is released under the [MIT License](LICENSE).

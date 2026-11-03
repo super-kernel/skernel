@@ -16,11 +16,11 @@ use Symfony\Component\Console\Tester\ApplicationTester;
 final class ListCommandTest extends TestCase
 {
     private const string LOGO = <<<'LOGO'
-           _____ __ __                     __
-          / ___// //_/__  _________  ___  / /
-          \__ \/ ,< / _ \/ ___/ __ \/ _ \/ /
-         ___/ / /| /  __/ /  / / / /  __/ /
-        /____/_/ |_\___/_/  /_/ /_/\___/_/
+           _____ __ __ __________  _   __________
+          / ___// //_// ____/ __ \/ | / / ____/ /
+          \__ \/ ,<  / __/ / /_/ /  |/ / __/ / /
+         ___/ / /| |/ /___/ _, _/ /|  / /___/ /___
+        /____/_/ |_/_____/_/ |_/_/ |_/_____/_____/
         LOGO;
 
     /** @return iterable<string, array{array<string, string|bool>}> */
@@ -43,12 +43,12 @@ final class ListCommandTest extends TestCase
         ];
     }
 
-    public function testDescribesItselfAsTheSKernelCommandList(): void
+    public function testDescribesItselfAsTheSKERNELCommandList(): void
     {
         $command = new ListCommand();
 
         self::assertSame('list', $command->getName());
-        self::assertSame('List SKernel commands', $command->getDescription());
+        self::assertSame('List SKERNEL commands', $command->getDescription());
     }
 
     /** @throws Exception If Console command initialization or execution fails */
@@ -59,7 +59,7 @@ final class ListCommandTest extends TestCase
         self::assertSame(Command::SUCCESS, $tester->run([
             'command' => 'list',
         ]));
-        self::assertStringStartsWith(self::LOGO . "\nSKernel\n", $tester->getDisplay(true));
+        self::assertStringStartsWith(self::LOGO . "\nSKERNEL\n", $tester->getDisplay(true));
     }
 
     /**
@@ -82,7 +82,7 @@ final class ListCommandTest extends TestCase
     private function tester(): ApplicationTester
     {
         $application = new class() extends Application implements ApplicationInterface {};
-        $application->setName('SKernel');
+        $application->setName('SKERNEL');
         $application->setAutoExit(false);
         $application->addCommand(new ListCommand());
         $application->addCommand(new Command('demo:run'));

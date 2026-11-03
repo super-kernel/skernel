@@ -13,8 +13,8 @@ use Symfony\Component\Console\Application;
 use Symfony\Component\Console\Input\InputOption;
 
 /**
- * Presents the console as SKernel, adds the global project-directory option, and replaces Symfony's help and list
- * commands with SKernel's own.
+ * Presents the console as SKERNEL, adds the global project-directory option, and replaces Symfony's help and list
+ * commands with SKERNEL's own.
  */
 #[Listener]
 final readonly class BeforeApplicationStartListener implements ListenerInterface
@@ -38,7 +38,7 @@ final readonly class BeforeApplicationStartListener implements ListenerInterface
         $application = $event->application();
 
         if ($application instanceof Application) {
-            $application->setName('SKernel');
+            $application->setName('SKERNEL');
             $application->getDefinition()->addOption(new InputOption(
                 'working-dir',
                 'd',

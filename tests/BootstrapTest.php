@@ -39,15 +39,15 @@ use const PHP_RELEASE_VERSION;
 final class BootstrapTest extends TestCase
 {
     private const string LOGO = <<<'LOGO'
-           _____ __ __                     __
-          / ___// //_/__  _________  ___  / /
-          \__ \/ ,< / _ \/ ___/ __ \/ _ \/ /
-         ___/ / /| /  __/ /  / / / /  __/ /
-        /____/_/ |_\___/_/  /_/ /_/\___/_/
+           _____ __ __ __________  _   __________
+          / ___// //_// ____/ __ \/ | / / ____/ /
+          \__ \/ ,<  / __/ / /_/ /  |/ / __/ / /
+         ___/ / /| |/ /___/ _, _/ /|  / /___/ /___
+        /____/_/ |_/_____/_/ |_/_/ |_/_____/_____/
         LOGO;
 
     /** @throws JsonException When the root manifest is not valid JSON */
-    public function testVersionReportsSKernelWithTheRootPackageVersion(): void
+    public function testVersionReportsSKERNELWithTheRootPackageVersion(): void
     {
         $manifest = json_decode(
             (string) file_get_contents(dirname(__DIR__) . '/composer.json'),
@@ -55,7 +55,7 @@ final class BootstrapTest extends TestCase
             512,
             JSON_THROW_ON_ERROR,
         );
-        $expected = isset($manifest['version']) ? 'SKernel ' . $manifest['version'] : 'SKernel';
+        $expected = isset($manifest['version']) ? 'SKERNEL ' . $manifest['version'] : 'SKERNEL';
 
         $output = $this->bootstrap('--version', $status);
         $lines = array_filter($output);
@@ -64,12 +64,12 @@ final class BootstrapTest extends TestCase
         self::assertSame($expected, end($lines));
     }
 
-    public function testOverviewOpensWithTheSKernelLogo(): void
+    public function testOverviewOpensWithTheSKERNELLogo(): void
     {
         $output = $this->bootstrap('--no-ansi', $status);
 
         self::assertSame(0, $status, implode("\n", $output));
-        self::assertStringContainsString(self::LOGO . "\nSKernel", implode("\n", $output));
+        self::assertStringContainsString(self::LOGO . "\nSKERNEL", implode("\n", $output));
     }
 
     /** @throws JsonException When standard output is not exactly the JSON listing */
@@ -79,7 +79,7 @@ final class BootstrapTest extends TestCase
         $listing = json_decode(implode("\n", $output), true, 512, JSON_THROW_ON_ERROR);
 
         self::assertSame(0, $status);
-        self::assertSame('SKernel', $listing['application']['name']);
+        self::assertSame('SKERNEL', $listing['application']['name']);
     }
 
     public function testLogRecordsBelowWarningAreNotWritten(): void

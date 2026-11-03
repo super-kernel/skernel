@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace Src\Configuration;
 
 /**
- * The settings of a project's SKernel configuration file; null leaves a setting to its option or default.
+ * The settings of a project's SKERNEL configuration file; null leaves a setting to its option or default.
  */
 final readonly class ProjectConfiguration
 {

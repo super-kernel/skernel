@@ -2,18 +2,18 @@
   <a href="README.md">English</a> | <strong>中文文档</strong>
 </p>
 
-# SKernel
+# SKERNEL
 
-`super-kernel/skernel` 即 SKernel，是 SuperKernel 应用的命令行项目工具，作用相当于 Java 项目中的 Maven。它本身也是用 SuperKernel 构建的控制台应用，计划以独立的二进制文件发布。
+`super-kernel/skernel` 即 SKERNEL，是 SuperKernel 应用的命令行项目工具，作用相当于 Java 项目中的 Maven。它本身也是用 SuperKernel 构建的控制台应用，计划以独立的二进制文件发布。
 
 > [!NOTE]
-> SKernel 仍在积极开发中。目前提供 `build` 和 `package` 命令；创建、运行、清理项目以及更新 SKernel 自身的命令还没有实现。控制台另有 SKernel 自己的 `help` 和 `list` 命令、Symfony Console 的 `completion` 命令，以及 `--version` 选项。二进制文件将通过本仓库的 GitHub Releases 和 Packages 发布，目前还没有发布任何内容。
+> SKERNEL 仍在积极开发中。目前提供 `build` 和 `package` 命令；创建、运行、清理项目以及更新 SKERNEL 自身的命令还没有实现。控制台另有 SKERNEL 自己的 `help` 和 `list` 命令、Symfony Console 的 `completion` 命令，以及 `--version` 选项。二进制文件将通过本仓库的 GitHub Releases 和 Packages 发布，目前还没有发布任何内容。
 
 ## 控制台
 
-不带命令运行 SKernel，或运行 `list` 时，纯文本的命令总览上方会打印 SKernel 标志。raw、JSON、XML 和 Markdown 格式的列表、按命名空间列出的列表以及命令帮助都不打印标志。`--version` 输出 `SKernel`，包声明了版本时后面跟上版本号。
+不带命令运行 SKERNEL，或运行 `list` 时，纯文本的命令总览上方会打印 SKERNEL 标志。raw、JSON、XML 和 Markdown 格式的列表、按命名空间列出的列表以及命令帮助都不打印标志。`--version` 输出 `SKERNEL`，包声明了版本时后面跟上版本号。
 
-SKernel 把 WARNING 及以上级别的日志（包括框架的扫描汇总和异常报告）写到 STDERR，STDOUT 只承载命令本身的输出；例如 `list --format=json` 在 STDOUT 上输出的就是纯 JSON。
+SKERNEL 把 WARNING 及以上级别的日志（包括框架的扫描汇总和异常报告）写到 STDERR，STDOUT 只承载命令本身的输出；例如 `list --format=json` 在 STDOUT 上输出的就是纯 JSON。
 
 命令不存在、选项不存在这类用法错误，会在 STDERR 上打印一条简短的提示；如果是某个命令的输入有误，后面还会打印该命令的用法。退出码为 1。加上 `-v` 时还会显示异常类名和堆栈。
 
@@ -41,11 +41,11 @@ SKernel 把 WARNING 及以上级别的日志（包括框架的扫描汇总和异
 
 ## 受管 PHP
 
-SKernel 用自己构建的静态 PHP 来运行和打包项目，而不是系统上的 PHP。PHP 版本写成 `major.minor`（例如 `8.4`）时，选用 php.net 上该分支的最新发布；写成 `major.minor.patch`（例如 `8.4.27`）时精确使用该版本。不指定版本时，SKernel 选用满足根包 `require.php` 的最新受支持 PHP 版本。
+SKERNEL 用自己构建的静态 PHP 来运行和打包项目，而不是系统上的 PHP。PHP 版本写成 `major.minor`（例如 `8.4`）时，选用 php.net 上该分支的最新发布；写成 `major.minor.patch`（例如 `8.4.27`）时精确使用该版本。不指定版本时，SKERNEL 选用满足根包 `require.php` 的最新受支持 PHP 版本。
 
-构建出的 PHP 包含项目安装所需的扩展，也就是根清单中、已安装时的开发依赖中，以及每个已安装包中的 `ext-*` 要求，另外再加上 `phar`。SKernel 使用固定版本的 [static-php-cli](https://github.com/crazywhalecc/static-php-cli)，按平台、版本和扩展组合各构建一次，产出静态 PHP CLI 和用于独立二进制的 micro 运行时，之后重复使用。
+构建出的 PHP 包含项目安装所需的扩展，也就是根清单中、已安装时的开发依赖中，以及每个已安装包中的 `ext-*` 要求，另外再加上 `phar`。SKERNEL 使用固定版本的 [static-php-cli](https://github.com/crazywhalecc/static-php-cli)，按平台、版本和扩展组合各构建一次，产出静态 PHP CLI 和用于独立二进制的 micro 运行时，之后重复使用。
 
-SKernel 下载和构建的所有内容都放在它的主目录 `~/.skernel` 中，或者环境变量 `SKERNEL_HOME` 指定的目录中：
+SKERNEL 下载和构建的所有内容都放在它的主目录 `~/.skernel` 中，或者环境变量 `SKERNEL_HOME` 指定的目录中：
 
 ```text
 ~/.skernel/
@@ -60,7 +60,7 @@ SKernel 下载和构建的所有内容都放在它的主目录 `~/.skernel` 中�
 └── work/<job>/                  sources and build output of one build
 ```
 
-首次构建某个运行时需要联网，还需要 static-php-cli 要求的构建工具，例如 C 编译器、`perl`、`re2c`、`autoconf`、`automake`、`cmake`、`libtool` 和 `gettext`。SKernel 从不安装系统软件包；构建失败时，static-php-cli 在 STDERR 上的输出会指出缺少什么，该次构建的目录会保留下来供检查。static-php-cli 的二进制在运行前会按固定的 SHA-256 摘要校验；php.net 的查询结果缓存一天，php.net 无法访问时沿用缓存的结果。
+首次构建某个运行时需要联网，还需要 static-php-cli 要求的构建工具，例如 C 编译器、`perl`、`re2c`、`autoconf`、`automake`、`cmake`、`libtool` 和 `gettext`。SKERNEL 从不安装系统软件包；构建失败时，static-php-cli 在 STDERR 上的输出会指出缺少什么，该次构建的目录会保留下来供检查。static-php-cli 的二进制在运行前会按固定的 SHA-256 摘要校验；php.net 的查询结果缓存一天，php.net 无法访问时沿用缓存的结果。
 
 ## 命令
 
@@ -111,7 +111,7 @@ Package written to /path/to/my-app/target/my-app.
 
 ## 从源码运行
 
-在二进制文件发布之前，请从本仓库的克隆中运行 SKernel。SuperKernel 根据工作目录识别应用的根目录，所以请在 SKernel 自己的目录中启动它，再用 `-d` 选择要处理的项目：
+在二进制文件发布之前，请从本仓库的克隆中运行 SKERNEL。SuperKernel 根据工作目录识别应用的根目录，所以请在 SKERNEL 自己的目录中启动它，再用 `-d` 选择要处理的项目：
 
 ```bash
 git clone https://github.com/super-kernel/skernel.git
@@ -124,4 +124,4 @@ php bin/bootstrap.php package -d ../my-app
 
 ## 许可证
 
-SKernel 以 [MIT 许可证](LICENSE) 发布。
+SKERNEL 以 [MIT 许可证](LICENSE) 发布。

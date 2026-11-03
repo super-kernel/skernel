@@ -1,8 +1,8 @@
 {
     "$schema": "https://json-schema.org/draft/2020-12/schema",
     "$id": "https://raw.githubusercontent.com/super-kernel/skernel/main/skernel.schema.json",
-    "title": "SKernel configuration",
-    "description": "Settings for the options left off SKernel's command line, read from skernel.json or skernel.json.dist in the project root.",
+    "title": "SKERNEL configuration",
+    "description": "Settings for the options left off SKERNEL's command line, read from skernel.json or skernel.json.dist in the project root.",
     "type": "object",
     "additionalProperties": false,
     "properties": {

@@ -26,7 +26,7 @@ use const JSON_THROW_ON_ERROR;
 use const JSON_UNESCAPED_SLASHES;
 
 /**
- * Answers queries against the php.net release index, caching each answer in the SKernel home for a day.
+ * Answers queries against the php.net release index, caching each answer in the SKERNEL home for a day.
  *
  * When php.net cannot be reached, an older cached answer is used instead.
  */

@@ -29,7 +29,7 @@ final class Download
         'http' => [
             'follow_location' => 1,
             'timeout'         => 60,
-            'user_agent'      => 'SKernel',
+            'user_agent'      => 'skernel',
         ],
     ];
 

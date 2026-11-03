@@ -13,7 +13,7 @@ use function sprintf;
 use function substr_count;
 
 /**
- * Resolves the exact PHP version that SKernel builds a managed runtime for.
+ * Resolves the exact PHP version that SKERNEL builds a managed runtime for.
  */
 final readonly class PhpReleases
 {

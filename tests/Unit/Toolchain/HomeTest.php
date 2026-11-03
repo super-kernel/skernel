@@ -10,7 +10,7 @@ use function putenv;
 
 final class HomeTest extends ToolchainTestCase
 {
-    public function testSkernelHomeOverridesTheUsersHome(): void
+    public function testTheSKERNELHomeVariableOverridesTheUsersHome(): void
     {
         self::assertSame($this->home, new Home()->directory());
     }

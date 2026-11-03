@@ -23,8 +23,8 @@ use function unlink;
 /**
  * Runs the pinned static-php-cli release, downloading and verifying its self-contained binary on first use.
  *
- * Its downloads and prebuilt libraries live in the SKernel home; sources and build output stay in the caller's job.
- * SKernel never runs its doctor command, which may try to install system packages with sudo.
+ * Its downloads and prebuilt libraries live in the SKERNEL home; sources and build output stay in the caller's job.
+ * SKERNEL never runs its doctor command, which may try to install system packages with sudo.
  */
 final readonly class StaticPhpCli
 {

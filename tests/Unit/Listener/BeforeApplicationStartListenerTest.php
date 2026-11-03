@@ -27,7 +27,7 @@ final class BeforeApplicationStartListenerTest extends TestCase
         ], $listener->listen());
     }
 
-    public function testPresentsTheConsoleAsSKernelWithItsOwnHelpAndListCommands(): void
+    public function testPresentsTheConsoleAsSKERNELWithItsOwnHelpAndListCommands(): void
     {
         $helpCommand = new HelpCommand();
         $listCommand = new ListCommand();
@@ -39,7 +39,7 @@ final class BeforeApplicationStartListenerTest extends TestCase
 
         $workingDirectory = $application->getDefinition()->getOption('working-dir');
 
-        self::assertSame('SKernel', $application->getName());
+        self::assertSame('SKERNEL', $application->getName());
         self::assertSame('d', $workingDirectory->getShortcut());
         self::assertTrue($workingDirectory->isValueRequired());
         self::assertSame($helpCommand, $application->get('help'));

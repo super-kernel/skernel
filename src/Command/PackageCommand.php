@@ -36,7 +36,7 @@ use function unlink;
 /**
  * Builds a staged copy of the project with its managed PHP and packages it as a standalone binary or a PHAR.
  *
- * Options left off the command line come from the project's SKernel configuration file, then from the defaults.
+ * Options left off the command line come from the project's SKERNEL configuration file, then from the defaults.
  */
 #[AttributeCommand(name: 'package', description: 'Package the project as a standalone binary or a PHAR')]
 final class PackageCommand extends Command

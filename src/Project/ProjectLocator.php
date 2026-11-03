@@ -21,7 +21,7 @@ use function sprintf;
 use function str_starts_with;
 
 /**
- * Locates and validates the SuperKernel application that an SKernel command works on.
+ * Locates and validates the SuperKernel application that an SKERNEL command works on.
  */
 final readonly class ProjectLocator
 {

@@ -17,7 +17,7 @@ use function is_string;
 use function sprintf;
 
 /**
- * Validates the values of an SKernel configuration file and names the offending setting in its messages.
+ * Validates the values of an SKERNEL configuration file and names the offending setting in its messages.
  */
 final class Setting
 {

@@ -14,7 +14,7 @@ use SuperKernel\Logger\Factory\LoggerFactory;
 use SuperKernel\Logger\Formatter\ConsoleFormatter;
 
 /**
- * Writes SKernel and framework log records of WARNING and above to STDERR, keeping STDOUT for command output.
+ * Writes SKERNEL and framework log records of WARNING and above to STDERR, keeping STDOUT for command output.
  */
 #[Provider(StdoutLoggerInterface::class)]
 final readonly class StderrLogger implements StdoutLoggerInterface

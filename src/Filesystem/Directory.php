@@ -18,7 +18,7 @@ use function sprintf;
 use function unlink;
 
 /**
- * Creates and removes directories that SKernel owns, such as staging copies and build jobs.
+ * Creates and removes directories that SKERNEL owns, such as staging copies and build jobs.
  */
 final class Directory
 {

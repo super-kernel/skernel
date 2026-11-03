@@ -11,7 +11,7 @@ use function is_string;
 use function rtrim;
 
 /**
- * Locates the SKernel home that holds the managed PHP toolchain: SKERNEL_HOME, or .skernel in the user's home.
+ * Locates the SKERNEL home that holds the managed PHP toolchain: SKERNEL_HOME, or .skernel in the user's home.
  */
 final readonly class Home
 {

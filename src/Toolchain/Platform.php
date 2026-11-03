@@ -24,7 +24,7 @@ final class Platform
             'Linux'   => 'linux',
             'Darwin'  => 'macos',
             'Windows' => 'windows',
-            default   => throw new RuntimeException(sprintf('SKernel cannot build PHP on %s.', PHP_OS_FAMILY)),
+            default   => throw new RuntimeException(sprintf('SKERNEL cannot build PHP on %s.', PHP_OS_FAMILY)),
         };
         $machine = strtolower(php_uname('m'));
         $architecture = match ($machine) {
@@ -34,7 +34,7 @@ final class Platform
         };
 
         if (null === $architecture) {
-            throw new RuntimeException(sprintf('SKernel cannot build PHP for the %s architecture.', $machine));
+            throw new RuntimeException(sprintf('SKERNEL cannot build PHP for the %s architecture.', $machine));
         }
 
         return $system . '-' . $architecture;
