@@ -62,6 +62,8 @@ Everything SKERNEL downloads and builds lives in its home directory, `~/.skernel
 
 The first build of a runtime needs network access and the build tools that static-php-cli requires, such as a C compiler, `perl`, `re2c`, `autoconf`, `automake`, `cmake`, `libtool`, and `gettext`. SKERNEL never installs system packages; when a build fails, static-php-cli's output on STDERR names what is missing, and the job's directory is kept for inspection. The static-php-cli binary and Zig are verified against their pinned SHA-256 digests before they run, and php.net answers are cached for a day and reused when php.net cannot be reached.
 
+Downloads go through the proxy that the environment names, as with curl: `https_proxy` or `HTTPS_PROXY` for HTTPS, `http_proxy` or `HTTP_PROXY` for HTTP, and `no_proxy` or `NO_PROXY` for the comma-separated hosts, with their subdomains, that bypass it. static-php-cli and Composer, which SKERNEL runs, read the same variables.
+
 ## Commands
 
 ### build

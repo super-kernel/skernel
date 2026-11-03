@@ -21,22 +21,23 @@ use function tempnam;
 use function unlink;
 
 /**
- * Downloads over HTTPS, following redirects, and publishes verified files by atomic rename.
+ * Downloads over HTTPS through the proxy the environment names, following redirects, and publishes verified files by
+ * atomic rename.
  */
 final class Download
 {
-    private const array OPTIONS = [
-        'http' => [
-            'follow_location' => 1,
-            'timeout'         => 60,
-            'user_agent'      => 'skernel',
-        ],
+    private const array HTTP_OPTIONS = [
+        'follow_location' => 1,
+        'timeout'         => 60,
+        'user_agent'      => 'skernel',
     ];
 
-    /** @throws RuntimeException When the URL cannot be read */
+    /** @throws RuntimeException When the URL cannot be read or the proxy variable is invalid */
     public static function contents(string $url): string
     {
-        $contents = @file_get_contents($url, false, stream_context_create(self::OPTIONS));
+        $contents = @file_get_contents($url, false, stream_context_create([
+            'http' => self::HTTP_OPTIONS + HttpProxy::options($url),
+        ]));
 
         if (false === $contents) {
             throw new RuntimeException(sprintf('Unable to download %s.', $url));
@@ -48,7 +49,8 @@ final class Download
     /**
      * Writes the download to a temporary file beside the target and renames it once its SHA-256 digest matches.
      *
-     * @throws RuntimeException When the URL cannot be read, the digest differs, or the file cannot be published
+     * @throws RuntimeException When the URL cannot be read, the proxy variable is invalid, the digest differs, or the
+     *                          file cannot be published
      */
     public static function file(string $url, string $target, string $sha256): void
     {
@@ -59,7 +61,9 @@ final class Download
         }
 
         try {
-            $source = @fopen($url, 'rb', false, stream_context_create(self::OPTIONS));
+            $source = @fopen($url, 'rb', false, stream_context_create([
+                'http' => self::HTTP_OPTIONS + HttpProxy::options($url),
+            ]));
             $destination = @fopen($temporary, 'wb');
 
             if (false === $source || false === $destination || false === stream_copy_to_stream($source, $destination)) {

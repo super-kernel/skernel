@@ -62,6 +62,8 @@ SKERNEL 下载和构建的所有内容都放在它的主目录 `~/.skernel` 中�
 
 首次构建某个运行时需要联网，还需要 static-php-cli 要求的构建工具，例如 C 编译器、`perl`、`re2c`、`autoconf`、`automake`、`cmake`、`libtool` 和 `gettext`。SKERNEL 从不安装系统软件包；构建失败时，static-php-cli 在 STDERR 上的输出会指出缺少什么，该次构建的目录会保留下来供检查。static-php-cli 的二进制和 Zig 在运行前都会按固定的 SHA-256 摘要校验；php.net 的查询结果缓存一天，php.net 无法访问时沿用缓存的结果。
 
+下载时使用环境变量指定的代理，规则与 curl 相同：HTTPS 用 `https_proxy` 或 `HTTPS_PROXY`，HTTP 用 `http_proxy` 或 `HTTP_PROXY`；`no_proxy` 或 `NO_PROXY` 列出不走代理的主机（以逗号分隔，包括其子域名）。SKERNEL 调用的 static-php-cli 和 Composer 也读取这些变量。
+
 ## 命令
 
 ### build
