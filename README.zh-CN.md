@@ -27,15 +27,15 @@ SKernel 把 WARNING 及以上级别的日志（包括框架的扫描汇总和异
 build [-d|--working-dir=<dir>] [--php=<binary>]
 ```
 
-`build` 对项目做一次完整的源码扫描，把只恢复快照运行和 Phar 运行所需的扫描快照写到项目的 `<vendor>/.cache` 目录，vendor 目录遵循项目的 `config.vendor-dir`。项目必须已经安装好依赖，其中包括 `super-kernel/context` 和 `super-kernel/di`；扫描覆盖的包以这次安装为准。
+`build` 对项目做一次完整的源码扫描，把只恢复快照运行和 Phar 运行要加载的构建产物写到项目的 `<vendor>/.cache` 目录，vendor 目录遵循项目的 `config.vendor-dir`：包括扫描快照，以及构建发布 `SuperKernel\Event\ApplicationBuild` 时项目各组件写出的产物，例如 `super-kernel/aop` 预先准备好的代理。项目必须已经安装好依赖，其中包括 `super-kernel/context` 和 `super-kernel/di`；扫描覆盖的包以这次安装为准。
 
-扫描在一个单独的 PHP 进程中运行，所用的 PHP 由 `--php` 指定，可以是路径，也可以是在 `PATH` 中查找的名称，默认是运行 SKernel 的那个 PHP。该进程加载项目自己的 autoloader，只引导出项目的容器，不解析也不运行应用。该进程写出的所有内容（包括项目的扫描诊断）都转到 STDERR；成功时 STDOUT 只有一行：
+构建在一个单独的 PHP 进程中运行，所用的 PHP 由 `--php` 指定，可以是路径，也可以是在 `PATH` 中查找的名称，默认是运行 SKernel 的那个 PHP。该进程加载项目自己的 autoloader，引导出项目的容器；项目同时具备该事件和事件分发器时，再通过项目的 PSR-14 事件分发器发布 `ApplicationBuild`。整个过程不解析也不运行应用。该进程写出的所有内容（包括项目的扫描诊断）都转到 STDERR；成功时 STDOUT 只有一行：
 
 ```text
-Scan snapshots written to /path/to/my-app/vendor/.cache.
+Build artifacts written to /path/to/my-app/vendor/.cache.
 ```
 
-项目不存在、依赖没有安装、找不到 PHP 或扫描失败时，会在 STDERR 上打印一条简短的提示，退出码为 1。
+项目不存在、依赖没有安装、找不到 PHP 或构建失败时，会在 STDERR 上打印一条简短的提示，退出码为 1。
 
 ## 环境要求
 

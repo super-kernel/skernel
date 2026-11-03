@@ -74,14 +74,14 @@ final class BootstrapTest extends TestCase
         self::assertStringNotContainsString('[INFO]', implode("\n", $output));
     }
 
-    public function testBuildWritesTheScanSnapshotsOfTheProject(): void
+    public function testBuildWritesTheBuildArtifactsOfTheProject(): void
     {
         $root = dirname(__DIR__);
         $output = $this->bootstrap('build -d ' . escapeshellarg($root), $status, '2>/dev/null');
 
         self::assertSame(0, $status);
         self::assertSame([
-            'Scan snapshots written to ' . $root . '/vendor/.cache.',
+            'Build artifacts written to ' . $root . '/vendor/.cache.',
         ], $output);
         self::assertFileExists($root . '/vendor/.cache/packages.ser');
     }
