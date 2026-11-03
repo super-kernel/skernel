@@ -15,6 +15,7 @@ use function exec;
 use function file_get_contents;
 use function implode;
 use function json_decode;
+use function preg_replace;
 
 use const JSON_THROW_ON_ERROR;
 use const PHP_BINARY;
@@ -71,6 +72,28 @@ final class BootstrapTest extends TestCase
 
         self::assertSame(0, $status, implode("\n", $output));
         self::assertStringNotContainsString('[INFO]', implode("\n", $output));
+    }
+
+    public function testBuildWritesTheScanSnapshotsOfTheProject(): void
+    {
+        $root = dirname(__DIR__);
+        $output = $this->bootstrap('build -d ' . escapeshellarg($root), $status, '2>/dev/null');
+
+        self::assertSame(0, $status);
+        self::assertSame([
+            'Scan snapshots written to ' . $root . '/vendor/.cache.',
+        ], $output);
+        self::assertFileExists($root . '/vendor/.cache/packages.ser');
+    }
+
+    public function testBuildRejectsADirectoryWithoutAProject(): void
+    {
+        $missing = dirname(__DIR__) . '/missing';
+        $output = $this->bootstrap('build -d ' . escapeshellarg($missing), $status, '2>&1 >/dev/null');
+        $message = (string) preg_replace('/\s+/', ' ', implode(' ', $output));
+
+        self::assertSame(1, $status);
+        self::assertStringContainsString('The project directory ' . $missing . ' does not exist.', $message);
     }
 
     /** @return list<string> */

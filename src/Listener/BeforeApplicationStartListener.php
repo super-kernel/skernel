@@ -10,9 +10,11 @@ use SuperKernel\Attribute\Listener;
 use SuperKernel\Contract\ListenerInterface;
 use SuperKernel\Event\BeforeApplicationStart;
 use Symfony\Component\Console\Application;
+use Symfony\Component\Console\Input\InputOption;
 
 /**
- * Presents the console as SKernel and replaces Symfony's help and list commands with SKernel's own.
+ * Presents the console as SKernel, adds the global project-directory option, and replaces Symfony's help and list
+ * commands with SKernel's own.
  */
 #[Listener]
 final readonly class BeforeApplicationStartListener implements ListenerInterface
@@ -37,6 +39,12 @@ final readonly class BeforeApplicationStartListener implements ListenerInterface
 
         if ($application instanceof Application) {
             $application->setName('SKernel');
+            $application->getDefinition()->addOption(new InputOption(
+                'working-dir',
+                'd',
+                InputOption::VALUE_REQUIRED,
+                'Use the given directory as the project directory instead of the current one',
+            ));
             $application->addCommand($this->helpCommand);
             $application->addCommand($this->listCommand);
         }
