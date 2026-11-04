@@ -38,7 +38,7 @@ final readonly class ZigMirrors
     }
 
     /**
-     * @param string $asset The file name of the release archive, such as zig-x86_64-linux-0.16.0.tar.xz
+     * @param string $asset The file name of the release archive, such as zig-x86_64-linux-0.17.1.tar.xz
      *
      * @throws RuntimeException When neither a mirror nor ziglang.org serves the archive with its digest, the proxy
      *                          variable is invalid, or the file cannot be published

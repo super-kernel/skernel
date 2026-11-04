@@ -35,6 +35,16 @@ use const JSON_UNESCAPED_SLASHES;
  */
 final readonly class RuntimeProvider
 {
+    /**
+     * Every runtime has both binaries. micro reports `cli` as its SAPI, so that a standalone binary starts what
+     * requires the CLI, such as a Swoole main process.
+     */
+    private const array BUILD_OPTIONS = [
+        '--build-cli',
+        '--build-micro',
+        '--with-micro-fake-cli',
+    ];
+
     public function __construct(private Home $home, private StaticPhpCli $staticPhpCli)
     {
     }
@@ -81,8 +91,7 @@ final readonly class RuntimeProvider
         $status = $this->staticPhpCli->run([
             'build',
             $list,
-            '--build-cli',
-            '--build-micro',
+            ...self::BUILD_OPTIONS,
         ], $job, $output);
 
         if (0 !== $status) {
@@ -134,8 +143,8 @@ final readonly class RuntimeProvider
     }
 
     /**
-     * Names the directory of a runtime: its platform, PHP version, and a hash of its extensions and of the
-     * static-php-cli release that builds it.
+     * Names the directory of a runtime: its platform, PHP version, and a hash of what else its binaries depend on,
+     * namely its extensions, the toolchain that builds it, and the options it is built with.
      *
      * @param list<string> $extensions Sorted static-php-cli extension names
      *
@@ -143,7 +152,11 @@ final readonly class RuntimeProvider
      */
     public function directory(string $version, array $extensions): string
     {
-        $key = substr(hash('sha256', implode(',', $extensions) . "\0" . $this->staticPhpCli->version()), 0, 16);
+        $key = substr(hash('sha256', implode("\0", [
+            implode(',', $extensions),
+            $this->staticPhpCli->toolchain(),
+            ...self::BUILD_OPTIONS,
+        ])), 0, 16);
 
         return sprintf('%s/runtimes/%s/php-%s/%s', $this->home->directory(), Platform::current(), $version, $key);
     }

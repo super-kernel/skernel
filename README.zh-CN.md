@@ -43,7 +43,7 @@ SKERNEL 把 WARNING 及以上级别的日志（包括框架的扫描汇总和异
 
 SKERNEL 用自己构建的静态 PHP 来运行和打包项目，而不是系统上的 PHP。PHP 版本写成 `major.minor`（例如 `8.4`）时，选用 php.net 上该分支的最新发布；写成 `major.minor.patch`（例如 `8.4.27`）时精确使用该版本。不指定版本时，SKERNEL 选用满足根包 `require.php` 的最新受支持 PHP 版本。
 
-构建出的 PHP 包含项目安装所需的扩展，也就是根清单中、已安装时的开发依赖中，以及每个已安装包中的 `ext-*` 要求，另外再加上 `phar`。SKERNEL 使用固定版本的 [static-php-cli](https://github.com/crazywhalecc/static-php-cli)，按平台、版本和扩展组合各构建一次，产出静态 PHP CLI 和用于独立二进制的 micro 运行时，之后重复使用。在 Linux 上，两者都静态链接 musl，可以在任何 Linux 发行版上运行；SKERNEL 用固定版本的 [Zig](https://ziglang.org) 构建它们，首次使用时校验并安装到自己的主目录中。按照 Zig 软件基金会对下载工具的要求，Zig 以随机顺序从[社区镜像](https://ziglang.org/download/community-mirrors/)下载，某个镜像太慢就换下一个，没有镜像能提供时才从 ziglang.org 下载。
+构建出的 PHP 包含项目安装所需的扩展，也就是根清单中、已安装时的开发依赖中，以及每个已安装包中的 `ext-*` 要求，另外再加上 `phar`。SKERNEL 使用固定版本的 [static-php-cli](https://github.com/crazywhalecc/static-php-cli)，按平台、版本和扩展组合各构建一次，产出静态 PHP CLI 和用于独立二进制的 micro 运行时，之后重复使用。micro 运行时把 `PHP_SAPI` 报告为 `cli`，所以独立二进制可以启动要求 CLI 的功能，例如 Swoole 服务。在 Linux 上，两者都静态链接 musl，并按该架构的基线 CPU 编译，不依赖具体的 Linux 发行版；SKERNEL 用固定版本的 [Zig](https://ziglang.org) 构建它们，首次使用时校验并安装到自己的主目录中。按照 Zig 软件基金会对下载工具的要求，Zig 以随机顺序从[社区镜像](https://ziglang.org/download/community-mirrors/)下载，某个镜像太慢就换下一个，没有镜像能提供时才从 ziglang.org 下载。
 
 SKERNEL 下载和构建的所有内容都放在它的主目录 `~/.skernel` 中，或者环境变量 `SKERNEL_HOME` 指定的目录中：
 
@@ -95,7 +95,7 @@ package [-d|--working-dir=<dir>] [--php=<version>] [--phar] [--dev] [--output=<p
 2. 按项目的 `composer.lock` 为副本安装依赖，使用的 Composer 由 `--composer` 指定，可以是路径，也可以是在 `PATH` 中查找的名称，默认是 `composer`。除非指定 `--dev`，否则不安装开发依赖。项目必须有 `composer.lock`，但项目自身不必安装依赖。Composer 不会按运行它的那个 PHP 检查平台要求，因为包的运行平台是受管 PHP。
 3. 用该次安装对应的受管 PHP 对副本运行 `build`。
 4. 把副本归档为 PHAR，它的 stub 加载副本的 autoloader、获取应用容器并运行应用，因此不需要入口脚本。
-5. 把受管 micro 运行时（或 `--runtime` 指定的文件）和 PHAR 依次写入输出路径；指定 `--phar` 时只写入 PHAR。结果文件会被设为可执行。
+5. 把受管 micro 运行时（或 `--runtime` 指定的文件）和 PHAR 依次写入输出路径；指定 `--phar` 时只写入 PHAR。结果文件会被设为可执行。用 `--runtime` 指定的 micro 运行时必须把 `PHP_SAPI` 报告为 `cli`，结果文件才能启动 Swoole 服务；使用 static-php-cli 时，构建时加上 `--with-micro-fake-cli`。
 
 输出路径由 `--output` 指定，默认是 `target/<name>`，指定 `--phar` 时是 `target/<name>.phar`；其中 `<name>` 是根包名称的最后一段，根包没有名称时取项目目录名。副本的 Composer、构建和归档进程写出的所有内容都转到 STDERR；成功时 STDOUT 只有一行：
 
