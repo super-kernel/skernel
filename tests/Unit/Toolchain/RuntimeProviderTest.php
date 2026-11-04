@@ -4,11 +4,13 @@ declare(strict_types=1);
 
 namespace Src\Tests\Unit\Toolchain;
 
+use Src\Toolchain\DailyCache;
 use Src\Toolchain\Home;
 use Src\Toolchain\Platform;
 use Src\Toolchain\Runtime;
 use Src\Toolchain\RuntimeProvider;
 use Src\Toolchain\StaticPhpCli;
+use Src\Toolchain\ZigMirrors;
 use Symfony\Component\Console\Output\BufferedOutput;
 
 use function dirname;
@@ -55,6 +57,9 @@ final class RuntimeProviderTest extends ToolchainTestCase
 
     private function provider(): RuntimeProvider
     {
-        return new RuntimeProvider(new Home(), new StaticPhpCli(new Home()));
+        return new RuntimeProvider(
+            new Home(),
+            new StaticPhpCli(new Home(), new ZigMirrors(new DailyCache(new Home()))),
+        );
     }
 }

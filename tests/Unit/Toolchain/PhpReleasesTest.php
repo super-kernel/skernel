@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Src\Tests\Unit\Toolchain;
 
+use Src\Toolchain\DailyCache;
 use Src\Toolchain\Home;
 use Src\Toolchain\PhpReleases;
 use Src\Toolchain\ReleaseIndex;
@@ -77,7 +78,7 @@ final class PhpReleasesTest extends ToolchainTestCase
 
     private function releases(): PhpReleases
     {
-        return new PhpReleases(new ReleaseIndex(new Home()));
+        return new PhpReleases(new ReleaseIndex(new DailyCache(new Home())));
     }
 
     /** @param array<string, mixed> $answers Fresh cached php.net answers by query key */

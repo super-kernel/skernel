@@ -28,8 +28,9 @@ use function unlink;
  * Runs the pinned static-php-cli release, downloading and verifying its self-contained binary on first use.
  *
  * Its downloads and packages live in the SKERNEL home; sources and build output stay in the caller's job. On Linux it
- * builds statically linked musl binaries with a pinned Zig release, which is verified and installed into its package
- * root before the first run, so no system toolchain has to be installed with sudo. SKERNEL never runs its doctor
+ * builds statically linked musl binaries with a pinned Zig release, which is downloaded from a Zig community mirror or
+ * ziglang.org, verified, and installed into its package root before the first run, so no system toolchain has to be
+ * installed with sudo. SKERNEL never runs its doctor
  * command, which may try to install system packages with sudo.
  */
 final readonly class StaticPhpCli
@@ -40,8 +41,6 @@ final readonly class StaticPhpCli
 
     /** The Zig release that static-php-cli VERSION builds with */
     private const string ZIG = '0.16.0';
-
-    private const string ZIG_RELEASES = 'https://ziglang.org/download/';
 
     /** @var array<string, array{string, string}> Zig archive and SHA-256 digest by Linux platform */
     private const array ZIG_ASSETS = [
@@ -90,7 +89,7 @@ final readonly class StaticPhpCli
         ],
     ];
 
-    public function __construct(private Home $home)
+    public function __construct(private Home $home, private ZigMirrors $zigMirrors)
     {
     }
 
@@ -205,7 +204,7 @@ final readonly class StaticPhpCli
         $archive = $job . '/' . $asset;
         $package = 'zig-' . substr($platform, strlen('linux-')) . '-linux';
         Directory::remove($directory);
-        Download::file(self::ZIG_RELEASES . self::ZIG . '/' . $asset, $archive, $digest);
+        $this->zigMirrors->download(self::ZIG, $asset, $archive, $digest);
 
         try {
             $status = ProcessRunner::run([
