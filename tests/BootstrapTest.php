@@ -10,6 +10,7 @@ use Src\Filesystem\Directory;
 use Src\Project\ProjectLocator;
 use Src\Toolchain\DailyCache;
 use Src\Toolchain\Extensions;
+use Src\Toolchain\ExtensionVersions;
 use Src\Toolchain\Home;
 use Src\Toolchain\RuntimeProvider;
 use Src\Toolchain\StaticPhpCli;
@@ -106,6 +107,7 @@ final class BootstrapTest extends TestCase
             $runtime = new RuntimeProvider(
                 new Home(),
                 new StaticPhpCli(new Home(), new ZigMirrors(new DailyCache(new Home()))),
+                new ExtensionVersions(new DailyCache(new Home())),
             )->directory(
                 $version,
                 Extensions::required(new ProjectLocator()->locate($root)),

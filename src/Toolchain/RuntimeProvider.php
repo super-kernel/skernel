@@ -8,6 +8,7 @@ use Src\Filesystem\Directory;
 use Symfony\Component\Console\Exception\RuntimeException;
 use Symfony\Component\Console\Output\OutputInterface;
 
+use function array_diff_key;
 use function array_slice;
 use function dirname;
 use function explode;
@@ -45,27 +46,38 @@ final readonly class RuntimeProvider
         '--with-micro-fake-cli',
     ];
 
-    public function __construct(private Home $home, private StaticPhpCli $staticPhpCli)
+    public function __construct(
+        private Home              $home,
+        private StaticPhpCli      $staticPhpCli,
+        private ExtensionVersions $extensionVersions,
+    )
     {
     }
 
     /**
-     * @param string       $version    An exact PHP version
-     * @param list<string> $extensions Sorted static-php-cli extension names
+     * @param string $version An exact PHP version
      *
-     * @throws RuntimeException When static-php-cli cannot download or build the runtime, or it cannot be published
+     * @throws RuntimeException When no accepted extension version can be selected, static-php-cli cannot download or
+     *                          build the runtime, it has an extension version the project does not accept, or it
+     *                          cannot be published
      */
-    public function provide(string $version, array $extensions, OutputInterface $output): Runtime
+    public function provide(string $version, ExtensionRequirements $extensions, OutputInterface $output): Runtime
     {
         $home = $this->home->directory();
         $platform = Platform::current();
-        $list = implode(',', $extensions);
+        $list = implode(',', $extensions->names);
         $directory = $this->directory($version, $extensions);
         $php = str_starts_with($platform, 'windows-') ? 'php.exe' : 'php';
         $runtime = new Runtime($version, $directory . '/' . $php, $directory . '/micro.sfx');
 
         if (is_file($directory . '/manifest.json')) {
             return $runtime;
+        }
+
+        $sources = [];
+
+        foreach ($this->extensionVersions->select($extensions) as $name => $selected) {
+            $sources[] = '--custom-url=' . $name . ':' . $this->extensionVersions->archive($name, $selected);
         }
 
         $job = $home . '/work/' . uniqid('runtime-', true);
@@ -75,6 +87,7 @@ final readonly class RuntimeProvider
             '--with-php=' . implode('.', array_slice(explode('.', $version), 0, 2)),
             '--for-extensions=' . $list,
             '--custom-url=php-src:https://www.php.net/distributions/php-' . $version . '.tar.xz',
+            ...$sources,
             '--without-suggestions',
             '--retry=2',
         ], $job, $output);
@@ -105,13 +118,15 @@ final readonly class RuntimeProvider
             ));
         }
 
+        $extensionVersions = $this->extensionVersions->verify($job . '/buildroot/bin/' . $php, $extensions);
         $staged = $job . '/runtime';
         Directory::create($staged);
         $manifest = [
-            'php'            => $version,
-            'extensions'     => $extensions,
-            'static-php-cli' => $this->staticPhpCli->version(),
-            'platform'       => $platform,
+            'php'                => $version,
+            'extensions'         => $extensions->names,
+            'extension-versions' => $extensionVersions,
+            'static-php-cli'     => $this->staticPhpCli->version(),
+            'platform'           => $platform,
         ];
 
         if (
@@ -144,18 +159,25 @@ final readonly class RuntimeProvider
 
     /**
      * Names the directory of a runtime: its platform, PHP version, and a hash of what else its binaries depend on,
-     * namely its extensions, the toolchain that builds it, and the options it is built with.
+     * namely its extensions and their selected versions, the toolchain that builds it, and the options it is built
+     * with. The versions accepted of an extension with no selected version count too, so that a new requirement
+     * checks a new build.
      *
-     * @param list<string> $extensions Sorted static-php-cli extension names
-     *
-     * @throws RuntimeException When the home directory cannot be located or the platform is unsupported
+     * @throws RuntimeException When the home directory cannot be located, the platform is unsupported, or no accepted
+     *                          extension version can be selected
      */
-    public function directory(string $version, array $extensions): string
+    public function directory(string $version, ExtensionRequirements $extensions): string
     {
+        $selected = $this->extensionVersions->select($extensions);
         $key = substr(hash('sha256', implode("\0", [
-            implode(',', $extensions),
+            implode(',', $extensions->names),
             $this->staticPhpCli->toolchain(),
             ...self::BUILD_OPTIONS,
+            (string) json_encode([
+                $selected,
+                array_diff_key($extensions->constraints, $selected),
+                array_diff_key($extensions->conflicts, $selected),
+            ]),
         ])), 0, 16);
 
         return sprintf('%s/runtimes/%s/php-%s/%s', $this->home->directory(), Platform::current(), $version, $key);
