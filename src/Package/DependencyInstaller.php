@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace Src\Package;
 
-use Src\Process\Executable;
 use Src\Process\ProcessRunner;
 use Symfony\Component\Console\Exception\RuntimeException;
 use Symfony\Component\Console\Output\OutputInterface;
@@ -20,17 +19,17 @@ use function sprintf;
 final readonly class DependencyInstaller
 {
     /**
-     * @param string $composerBinary A path or a name looked up in PATH
-     * @param bool   $dev            Whether development dependencies are installed too
+     * @param non-empty-list<string> $composer The command that runs Composer
+     * @param bool                   $dev      Whether development dependencies are installed too
      *
      * @return int The exit status of Composer
      *
-     * @throws RuntimeException When Composer is not found or cannot be started
+     * @throws RuntimeException When Composer cannot be started
      */
-    public function install(string $directory, string $composerBinary, bool $dev, OutputInterface $output): int
+    public function install(string $directory, array $composer, bool $dev, OutputInterface $output): int
     {
         $command = [
-            Executable::find($composerBinary, 'Composer'),
+            ...$composer,
             'install',
             '--no-interaction',
             '--no-progress',
@@ -41,7 +40,7 @@ final readonly class DependencyInstaller
             $command[] = '--no-dev';
         }
 
-        return ProcessRunner::run($command, $directory, $output, sprintf('the Composer binary %s', $composerBinary), [
+        return ProcessRunner::run($command, $directory, $output, sprintf('the Composer binary %s', $composer[0]), [
             'COMPOSER_MIRROR_PATH_REPOS' => '1',
         ]);
     }

@@ -13,7 +13,7 @@
 
 不带命令运行 SKERNEL，或运行 `list` 时，纯文本的命令总览上方会打印 SKERNEL 标志。raw、JSON、XML 和 Markdown 格式的列表、按命名空间列出的列表以及命令帮助都不打印标志。`--version` 输出 `SKERNEL`，包声明了版本时后面跟上版本号。
 
-SKERNEL 把 WARNING 及以上级别的日志（包括框架的扫描汇总和异常报告）写到 STDERR，STDOUT 只承载命令本身的输出；例如 `list --format=json` 在 STDOUT 上输出的就是纯 JSON。
+SKERNEL 把 WARNING 及以上级别的日志（包括框架的异常报告）写到 STDERR，STDOUT 只承载命令本身的输出；例如 `list --format=json` 在 STDOUT 上输出的就是纯 JSON。
 
 命令不存在、选项不存在这类用法错误，会在 STDERR 上打印一条简短的提示；如果是某个命令的输入有误，后面还会打印该命令的用法。退出码为 1。加上 `-v` 时还会显示异常类名和堆栈。
 
@@ -140,7 +140,7 @@ package [-d|--working-dir=<dir>] [--php=<version>] [--phar] [--dev] [--output=<p
 `package` 把项目做成可直接执行的独立二进制，指定 `--phar` 时则做成 PHAR。它在项目的临时副本上工作，不会改动项目本身：
 
 1. 复制项目，但不包括 vendor 目录、`.git` 等 VCS 元数据、`target/` 目录，以及根目录下的 `.env` 和 `.env.*` 文件（这些文件通常保存本机密钥）；打包后的应用从进程环境变量读取环境配置。
-2. 按项目的 `composer.lock` 为副本安装依赖，使用的 Composer 由 `--composer` 指定，可以是路径，也可以是在 `PATH` 中查找的名称，默认是 `composer`。除非指定 `--dev`，否则不安装开发依赖。项目必须有 `composer.lock`，但项目自身不必安装依赖。Composer 不会按运行它的那个 PHP 检查平台要求，因为包的运行平台是受管 PHP。
+2. 按项目的 `composer.lock` 为副本安装依赖，使用的 Composer 与 [`new`](#new) 相同：`--composer` 指定的程序（路径或在 `PATH` 中查找的名称），否则是找到的第一个可用的 Composer 2，再否则是 SKERNEL 自己的。除非指定 `--dev`，否则不安装开发依赖。项目必须有 `composer.lock`，但项目自身不必安装依赖。Composer 不会按运行它的那个 PHP 检查平台要求，因为包的运行平台是受管 PHP。
 3. 用该次安装对应的受管 PHP 对副本运行 `build`。
 4. 把副本归档为 PHAR，它的 stub 加载副本的 autoloader、获取应用容器并运行应用，因此不需要入口脚本。
 5. 把受管 micro 运行时（或 `--runtime` 指定的文件）和 PHAR 依次写入输出路径；指定 `--phar` 时只写入 PHAR。结果文件会被设为可执行。用 `--runtime` 指定的 micro 运行时必须把 `PHP_SAPI` 报告为 `cli`，结果文件才能启动 Swoole 服务；使用 static-php-cli 时，构建时加上 `--with-micro-fake-cli`。
@@ -157,7 +157,6 @@ Package written to /path/to/my-app/target/my-app.
 
 - PHP `>=8.4.27 <8.5`，并带有 `openssl`、`pcntl`、`phar` 和 `zlib` 扩展；安装时由 Composer 检查所需的 PHP 扩展。
 - 首次构建受管 PHP 时需要联网，以及 static-php-cli 的构建工具，详见[受管 PHP](#受管-php)。
-- `package` 需要 Composer。
 
 ## 从源码运行
 

@@ -36,7 +36,7 @@
                     "minLength": 1
                 },
                 "composer": {
-                    "description": "The Composer binary that installs the packaged copy, a path or a name looked up in PATH.",
+                    "description": "The Composer binary that installs the packaged copy, a path or a name looked up in PATH, by default a working Composer 2 or else SKERNEL's own.",
                     "type": "string",
                     "minLength": 1
                 },

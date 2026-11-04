@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Src\Command;
 
 use Src\Build\ProjectBuilder;
+use Src\Composer\ComposerLocator;
 use Src\Configuration\ConfigurationLoader;
 use Src\Filesystem\Directory;
 use Src\Package\DependencyInstaller;
@@ -44,6 +45,7 @@ final class PackageCommand extends Command
     public function __construct(
         private readonly ProjectLocator      $projectLocator,
         private readonly ConfigurationLoader $configurationLoader,
+        private readonly ComposerLocator     $composerLocator,
         private readonly DependencyInstaller $dependencyInstaller,
         private readonly ManagedPhp          $managedPhp,
         private readonly ProjectBuilder      $projectBuilder,
@@ -68,7 +70,7 @@ final class PackageCommand extends Command
             'composer',
             null,
             InputOption::VALUE_REQUIRED,
-            'The Composer binary that installs the packaged copy, by default composer',
+            "The Composer binary that installs the packaged copy, by default a working Composer 2 or else SKERNEL's own",
         );
         $this->addOption(
             'runtime',
@@ -130,7 +132,10 @@ final class PackageCommand extends Command
             ]);
             $status = $this->dependencyInstaller->install(
                 $staging . '/project',
-                $input->getOption('composer') ?? $configuration->composer ?? 'composer',
+                $this->composerLocator->command(
+                    $input->getOption('composer') ?? $configuration->composer,
+                    $errorOutput,
+                ),
                 $input->getOption('dev') || true === $configuration->dev,
                 $errorOutput,
             );
