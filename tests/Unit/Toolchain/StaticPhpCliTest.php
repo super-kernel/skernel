@@ -5,17 +5,10 @@ declare(strict_types=1);
 namespace Src\Tests\Unit\Toolchain;
 
 use PHPUnit\Framework\Attributes\RequiresOperatingSystemFamily;
-use Src\Toolchain\DailyCache;
-use Src\Toolchain\Home;
 use Src\Toolchain\Platform;
-use Src\Toolchain\StaticPhpCli;
-use Src\Toolchain\ZigMirrors;
 use Symfony\Component\Console\Exception\RuntimeException;
 use Symfony\Component\Console\Output\BufferedOutput;
 
-use function chmod;
-use function dirname;
-use function file_put_contents;
 use function mkdir;
 use function strlen;
 use function substr;
@@ -75,28 +68,6 @@ final class StaticPhpCliTest extends ToolchainTestCase
         ], $this->job(), new BufferedOutput());
     }
 
-    /** Installs a static-php-cli script and a Zig that needs no download */
-    private function staticPhpCli(string $script): StaticPhpCli
-    {
-        $staticPhpCli = new StaticPhpCli(new Home(), new ZigMirrors(new DailyCache(new Home())));
-        $packages = $this->home . '/pkgroot/' . Platform::current();
-        $this->executable($this->home . '/tools/spc/' . $staticPhpCli->version() . '/spc', $script);
-        $this->executable($packages . '/zig/zig', 'echo 0.17.1');
-
-        foreach ([
-            'zig-cc',
-            'zig-c++',
-            'zig-ar',
-            'zig-ld.lld',
-            'zig-ranlib',
-            'zig-objcopy',
-        ] as $wrapper) {
-            $this->executable($packages . '/zig/' . $wrapper, 'exit 0');
-        }
-
-        return $staticPhpCli;
-    }
-
     private static function target(): string
     {
         return substr(Platform::current(), strlen('linux-')) . '-linux-musl';
@@ -108,12 +79,5 @@ final class StaticPhpCliTest extends ToolchainTestCase
         self::assertTrue(mkdir($job, 0o700, true));
 
         return $job;
-    }
-
-    private function executable(string $path, string $script): void
-    {
-        @mkdir(dirname($path), 0o700, true);
-        self::assertNotFalse(file_put_contents($path, "#!/bin/sh\n" . $script . "\n"));
-        self::assertTrue(chmod($path, 0o755));
     }
 }

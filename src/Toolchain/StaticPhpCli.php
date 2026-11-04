@@ -102,6 +102,12 @@ final readonly class StaticPhpCli
         return self::VERSION;
     }
 
+    /** Identifies the releases that build a runtime, which a change of either must rebuild */
+    public function toolchain(): string
+    {
+        return self::VERSION . ' zig-' . self::ZIG;
+    }
+
     /**
      * Runs a static-php-cli command in a job directory, which also holds its sources and build output.
      *
