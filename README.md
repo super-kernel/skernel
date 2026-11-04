@@ -153,6 +153,12 @@ Package written to /path/to/my-app/target/my-app.
 
 A missing `composer.lock`, a runtime file that is not found, a failed installation, build, or archive, or any of the failures of `build` prints a short message on STDERR and exits with status 1.
 
+## Releases
+
+Pushing a tag that is a [SemVer 2.0](https://semver.org) version, such as `1.2.3` or `1.3.0-rc.1`, without a `v` prefix, publishes a [GitHub Release](https://github.com/super-kernel/skernel/releases) with a binary for each of `linux-x86_64`, `linux-aarch64`, `macos-aarch64`, and `macos-x86_64`. Each binary is checked by creating, packaging, and serving a project before anything is published. Any other tag fails.
+
+The newest tag is always the [latest release](https://github.com/super-kernel/skernel/releases/latest), which `self-update` installs, whatever its version says. SKERNEL keeps no older version line and does not support moving back to an older version.
+
 ## Requirements
 
 - PHP `>=8.4.27 <8.5` with the `openssl`, `pcntl`, `phar`, and `zlib` extensions; Composer checks the required PHP extensions during installation.
