@@ -7,7 +7,7 @@
 `super-kernel/skernel` is SKERNEL, the command-line project tool for SuperKernel applications, filling the role that Maven plays for Java projects. It is itself built as a SuperKernel console application and is intended to be distributed as a standalone binary.
 
 > [!NOTE]
-> SKERNEL is under active development. It provides the `build` and `package` commands; the commands that create, run, and clean projects and that update SKERNEL itself are not implemented yet. Its console also offers SKERNEL's `help` and `list` commands, Symfony Console's `completion` command, and the `--version` option. Binaries will be published through this repository's GitHub Releases and Packages; nothing has been published yet.
+> SKERNEL is under active development. It provides the `new`, `run`, `build`, `package`, `clean`, and `self-update` commands. Its console also offers SKERNEL's `help` and `list` commands, Symfony Console's `completion` command, and the `--version` option. Binaries will be published through this repository's GitHub Releases and Packages; nothing has been published yet.
 
 ## Console
 
@@ -68,6 +68,52 @@ Downloads go through the proxy that the environment names, as with curl: `https_
 
 ## Commands
 
+### new
+
+```text
+new <directory> [--composer=<binary>]
+```
+
+`new` creates a project in `<directory>`, a path relative to the global `-d`/`--working-dir` option or the current directory, from the [`super-kernel/skeleton`](https://github.com/super-kernel/skeleton) package with Composer's `create-project` command. Platform requirements are not checked against the PHP that runs Composer, because the project runs on its managed PHP.
+
+With `--composer`, that binary is used. Otherwise SKERNEL uses the first working Composer 2 it finds: `composer` or `composer.phar` in `PATH`, then `~/.local/bin/composer`, `~/bin/composer`, `~/.config/composer/vendor/bin/composer`, and `~/.composer/vendor/bin/composer`. When there is none, it downloads a pinned Composer release, verified against its SHA-256 digest, into its home directory and runs it with a managed PHP, which it builds the first time.
+
+```text
+Project created in /path/to/my-app.
+```
+
+A directory that exists and is not empty, a Composer that is not found or fails, or a managed PHP that cannot be provided prints a short message on STDERR and exits with status 1.
+
+### run
+
+```text
+run [-d|--working-dir=<dir>] [--php=<version>] [--watch] [--] [<arguments>...]
+```
+
+`run` runs the project from source with its managed PHP, in a separate process in the project directory. `<arguments>` go to the application, so `run swoole:start` starts its Swoole server; put options for the application after `--`. Without `--watch`, SKERNEL exits with the application's exit status.
+
+With `--watch`, SKERNEL restarts the application whenever a project file changes. It checks once a second for changes to PHP files, `.env` and `.env.*` files, and `composer.lock`, leaving out the vendor directory, `target/`, and directories whose name starts with a dot, so the logs and caches a running application writes do not restart it. It sends the application SIGTERM and then SIGKILL after 10 seconds. An application that exits on its own is started again by the next change.
+
+SIGINT and SIGTERM stop the application before SKERNEL exits. The failures of `build`, and an application that cannot start, print a short message on STDERR and exit with status 1.
+
+### clean
+
+```text
+clean [-d|--working-dir=<dir>]
+```
+
+`clean` removes the project's `target/` directory and its `<vendor>/.cache` scan caches, and says what it removed. A package written elsewhere with `--output` or the `package.output` setting stays. The project's dependencies do not have to be installed.
+
+### self-update
+
+```text
+self-update
+```
+
+`self-update` replaces a standalone SKERNEL with the binary of the [latest GitHub Release](https://github.com/super-kernel/skernel/releases/latest), named `skernel-<platform>`, such as `skernel-linux-x86_64`. The download is verified against the SHA-256 digest that GitHub reports for it, and the binary keeps its permissions. When the digests match, SKERNEL is up to date and nothing is downloaded.
+
+Running from source, a latest release that cannot be read or has no verified binary for the platform, or a binary that cannot be replaced prints a short message on STDERR and exits with status 1. No release has been published yet.
+
 ### build
 
 ```text
@@ -109,7 +155,7 @@ A missing `composer.lock`, a runtime file that is not found, a failed installati
 
 ## Requirements
 
-- PHP `>=8.4.27 <8.5` with the `openssl`, `phar`, and `zlib` extensions; Composer checks the required PHP extensions during installation.
+- PHP `>=8.4.27 <8.5` with the `openssl`, `pcntl`, `phar`, and `zlib` extensions; Composer checks the required PHP extensions during installation.
 - Network access and static-php-cli's build tools the first time a managed PHP is built, as described under [Managed PHP](#managed-php).
 - Composer for `package`.
 
