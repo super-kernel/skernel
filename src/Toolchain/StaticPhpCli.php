@@ -14,6 +14,7 @@ use Throwable;
 use function chmod;
 use function escapeshellarg;
 use function exec;
+use function is_executable;
 use function is_file;
 use function rename;
 use function sprintf;
@@ -30,8 +31,8 @@ use function unlink;
  * Its downloads and packages live in the SKERNEL home; sources and build output stay in the caller's job. On Linux it
  * builds statically linked musl binaries with a pinned Zig release, which is downloaded from a Zig community mirror or
  * ziglang.org, verified, and installed into its package root before the first run, so no system toolchain has to be
- * installed with sudo. SKERNEL never runs its doctor
- * command, which may try to install system packages with sudo.
+ * installed with sudo. static-php-cli also installs its own pkg-config there, as its doctor command would; SKERNEL
+ * never runs that command, which may try to install system packages with sudo.
  */
 final readonly class StaticPhpCli
 {
@@ -105,7 +106,8 @@ final readonly class StaticPhpCli
      *
      * @return int The exit status of static-php-cli
      *
-     * @throws RuntimeException When the platform is unsupported, or the binary or Zig cannot be installed or started
+     * @throws RuntimeException When the platform is unsupported, or the binary, Zig, or pkg-config cannot be installed
+     *                          or started
      */
     public function run(array $arguments, string $job, OutputInterface $output): int
     {
@@ -161,6 +163,24 @@ final readonly class StaticPhpCli
         if (isset(self::ZIG_ASSETS[$platform])) {
             $environment['SPC_TARGET'] = 'native-native-musl';
             $this->installZig($executable, $platform, $job, $environment, $output);
+        }
+
+        if (!str_starts_with(
+            $platform,
+            'windows-',
+        ) && !is_executable($environment['PKG_ROOT_PATH'] . '/bin/pkg-config')) {
+            $status = ProcessRunner::run([
+                $executable,
+                'install-pkg',
+                'pkg-config',
+            ], $job, $output, sprintf('static-php-cli %s', self::VERSION), $environment);
+
+            if (0 !== $status) {
+                throw new RuntimeException(sprintf(
+                    'static-php-cli could not install pkg-config (exit status %d).',
+                    $status,
+                ));
+            }
         }
 
         return ProcessRunner::run([

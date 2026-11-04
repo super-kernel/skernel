@@ -10,6 +10,7 @@ use Src\Toolchain\Home;
 use Src\Toolchain\Platform;
 use Src\Toolchain\StaticPhpCli;
 use Src\Toolchain\ZigMirrors;
+use Symfony\Component\Console\Exception\RuntimeException;
 use Symfony\Component\Console\Output\BufferedOutput;
 
 use function chmod;
@@ -23,14 +24,61 @@ use function mkdir;
 #[RequiresOperatingSystemFamily('Linux')]
 final class StaticPhpCliTest extends ToolchainTestCase
 {
+    private const string RECORD = 'printf "%s|%s|%s|%s\n" "$*" "$SPC_TARGET" "$PKG_ROOT_PATH" "$SOURCE_PATH"';
+
     public function testRunsWithTheInstalledZigForAStaticMuslTarget(): void
+    {
+        $packages = $this->home . '/pkgroot/' . Platform::current();
+        $staticPhpCli = $this->staticPhpCli(self::RECORD);
+        $this->executable($packages . '/bin/pkg-config', 'exit 0');
+        $job = $this->job();
+        $output = new BufferedOutput();
+
+        self::assertSame(0, $staticPhpCli->run([
+            'download',
+            '--for-extensions=phar',
+        ], $job, $output));
+        self::assertSame(
+            'download --for-extensions=phar|native-native-musl|' . $packages . '|' . $job . "/source\n",
+            $output->fetch(),
+        );
+    }
+
+    public function testInstallsPkgConfigThroughStaticPhpCliBeforeTheFirstRun(): void
+    {
+        $packages = $this->home . '/pkgroot/' . Platform::current();
+        $staticPhpCli = $this->staticPhpCli(self::RECORD);
+        $job = $this->job();
+        $output = new BufferedOutput();
+
+        self::assertSame(0, $staticPhpCli->run([
+            'download',
+        ], $job, $output));
+        self::assertSame(
+            'install-pkg pkg-config|native-native-musl|' . $packages . '|' . $job . "/source\n"
+            . 'download|native-native-musl|' . $packages . '|' . $job . "/source\n",
+            $output->fetch(),
+        );
+    }
+
+    public function testFailsWhenPkgConfigCannotBeInstalled(): void
+    {
+        $staticPhpCli = $this->staticPhpCli('exit 3');
+
+        $this->expectException(RuntimeException::class);
+        $this->expectExceptionMessageIs('static-php-cli could not install pkg-config (exit status 3).');
+
+        $staticPhpCli->run([
+            'download',
+        ], $this->job(), new BufferedOutput());
+    }
+
+    /** Installs a static-php-cli script and a Zig that needs no download */
+    private function staticPhpCli(string $script): StaticPhpCli
     {
         $staticPhpCli = new StaticPhpCli(new Home(), new ZigMirrors(new DailyCache(new Home())));
         $packages = $this->home . '/pkgroot/' . Platform::current();
-        $this->executable(
-            $this->home . '/tools/spc/' . $staticPhpCli->version() . '/spc',
-            'printf "%s|%s|%s|%s\n" "$*" "$SPC_TARGET" "$PKG_ROOT_PATH" "$SOURCE_PATH"',
-        );
+        $this->executable($this->home . '/tools/spc/' . $staticPhpCli->version() . '/spc', $script);
         $this->executable($packages . '/zig/zig', 'echo 0.16.0');
 
         foreach ([
@@ -44,18 +92,15 @@ final class StaticPhpCliTest extends ToolchainTestCase
             $this->executable($packages . '/zig/' . $wrapper, 'exit 0');
         }
 
+        return $staticPhpCli;
+    }
+
+    private function job(): string
+    {
         $job = $this->home . '/work/job';
         self::assertTrue(mkdir($job, 0o700, true));
-        $output = new BufferedOutput();
 
-        self::assertSame(0, $staticPhpCli->run([
-            'download',
-            '--for-extensions=phar',
-        ], $job, $output));
-        self::assertSame(
-            'download --for-extensions=phar|native-native-musl|' . $packages . '|' . $job . "/source\n",
-            $output->fetch(),
-        );
+        return $job;
     }
 
     private function executable(string $path, string $script): void
