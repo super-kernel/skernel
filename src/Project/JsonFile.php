@@ -14,14 +14,14 @@ use function sprintf;
 use const JSON_THROW_ON_ERROR;
 
 /**
- * Decodes a project's JSON file into PHP arrays and scalars.
+ * Decodes a project's JSON file into PHP arrays, or objects on request, and scalars.
  */
 final class JsonFile
 {
     /**
      * @throws RuntimeException When the file cannot be read or does not contain valid JSON
      */
-    public static function decode(string $path): mixed
+    public static function decode(string $path, bool $associative = true): mixed
     {
         $contents = file_get_contents($path);
 
@@ -30,7 +30,7 @@ final class JsonFile
         }
 
         try {
-            return json_decode($contents, true, 512, JSON_THROW_ON_ERROR);
+            return json_decode($contents, $associative, 512, JSON_THROW_ON_ERROR);
         } catch (JsonException $exception) {
             throw new RuntimeException(sprintf('%s does not contain valid JSON.', $path), 0, $exception);
         }

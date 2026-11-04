@@ -21,7 +21,7 @@ use function sprintf;
 use function str_starts_with;
 
 /**
- * Locates and validates the SuperKernel application that an SKernel command works on.
+ * Locates and validates the SuperKernel application that an SKERNEL command works on.
  */
 final readonly class ProjectLocator
 {
@@ -38,6 +38,37 @@ final readonly class ProjectLocator
      */
     public function locate(?string $workingDirectory): Project
     {
+        $project = $this->find($workingDirectory);
+        $installed = $project->vendorDirectory . '/composer/installed.json';
+
+        if (!is_file($project->vendorDirectory . '/autoload.php') || !is_file($installed)) {
+            throw new RuntimeException(sprintf(
+                'The project in %s has no installed dependencies; run composer install first.',
+                $project->directory,
+            ));
+        }
+
+        $missing = array_diff(self::REQUIRED_PACKAGES, $this->installedPackages(JsonFile::decode($installed)));
+
+        if ([] !== $missing) {
+            throw new RuntimeException(sprintf(
+                'The project in %s is not a SuperKernel application: %s is not installed.',
+                $project->directory,
+                implode(' and ', $missing),
+            ));
+        }
+
+        return $project;
+    }
+
+    /**
+     * Uses the given working directory, or the current one when none is given, whether or not the project's
+     * dependencies are installed.
+     *
+     * @throws RuntimeException When the directory does not exist or has no valid composer.json
+     */
+    public function find(?string $workingDirectory): Project
+    {
         $requested = $workingDirectory ?? getcwd();
         $directory = false === $requested ? false : realpath($requested);
 
@@ -51,27 +82,16 @@ final readonly class ProjectLocator
             throw new RuntimeException(sprintf('No composer.json found in %s.', $directory));
         }
 
-        $vendorDirectory = $this->vendorDirectory($directory, JsonFile::decode($manifest));
-        $installed = $vendorDirectory . '/composer/installed.json';
+        $manifest = JsonFile::decode($manifest);
+        $name = is_array($manifest) ? $manifest['name'] ?? null : null;
+        $require = is_array($manifest) && is_array($manifest['require'] ?? null) ? $manifest['require'] : [];
 
-        if (!is_file($vendorDirectory . '/autoload.php') || !is_file($installed)) {
-            throw new RuntimeException(sprintf(
-                'The project in %s has no installed dependencies; run composer install first.',
-                $directory,
-            ));
-        }
-
-        $missing = array_diff(self::REQUIRED_PACKAGES, $this->installedPackages(JsonFile::decode($installed)));
-
-        if ([] !== $missing) {
-            throw new RuntimeException(sprintf(
-                'The project in %s is not a SuperKernel application: %s is not installed.',
-                $directory,
-                implode(' and ', $missing),
-            ));
-        }
-
-        return new Project($directory, $vendorDirectory);
+        return new Project(
+            $directory,
+            $this->vendorDirectory($directory, $manifest),
+            is_string($name) ? $name : null,
+            is_string($require['php'] ?? null) ? $require['php'] : null,
+        );
     }
 
     private function vendorDirectory(string $directory, mixed $manifest): string

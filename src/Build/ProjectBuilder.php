@@ -4,20 +4,12 @@ declare(strict_types=1);
 
 namespace Src\Build;
 
+use Src\Process\PhpScript;
 use Src\Project\Project;
 use Symfony\Component\Console\Exception\RuntimeException;
 use Symfony\Component\Console\Output\OutputInterface;
-use Symfony\Component\Process\Exception\ProcessStartFailedException;
-use Symfony\Component\Process\ExecutableFinder;
-use Symfony\Component\Process\Process;
 
-use function file_put_contents;
-use function is_executable;
-use function is_file;
 use function sprintf;
-use function sys_get_temp_dir;
-use function tempnam;
-use function unlink;
 use function var_export;
 
 /**
@@ -59,39 +51,8 @@ final readonly class ProjectBuilder
      */
     public function build(Project $project, string $phpBinary, OutputInterface $output): int
     {
-        $executable = is_file($phpBinary) && is_executable($phpBinary)
-            ? $phpBinary
-            : new ExecutableFinder()->find($phpBinary);
+        $entry = sprintf(self::ENTRY, var_export($project->vendorDirectory . '/autoload.php', true));
 
-        if (null === $executable) {
-            throw new RuntimeException(sprintf('The PHP binary %s was not found.', $phpBinary));
-        }
-
-        $entry = tempnam(sys_get_temp_dir(), 'skernel-build-');
-
-        if (false === $entry) {
-            throw new RuntimeException('Unable to create the temporary build entry script.');
-        }
-
-        try {
-            $script = sprintf(self::ENTRY, var_export($project->vendorDirectory . '/autoload.php', true));
-
-            if (false === file_put_contents($entry, $script)) {
-                throw new RuntimeException(sprintf('Unable to write the temporary build entry script %s.', $entry));
-            }
-
-            $process = new Process([
-                $executable,
-                $entry,
-            ], $project->directory, null, null, null);
-
-            return $process->run(static function (string $type, string $buffer) use ($output): void {
-                $output->write($buffer, false, OutputInterface::OUTPUT_RAW);
-            });
-        } catch (ProcessStartFailedException $exception) {
-            throw new RuntimeException(sprintf('Unable to start the PHP binary %s.', $phpBinary), 0, $exception);
-        } finally {
-            unlink($entry);
-        }
+        return PhpScript::run($entry, $phpBinary, [], $project->directory, $output);
     }
 }

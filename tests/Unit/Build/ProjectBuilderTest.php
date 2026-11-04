@@ -85,7 +85,11 @@ final class ProjectBuilderTest extends TestCase
         $this->expectExceptionMessageIs('The PHP binary skernel-missing-php was not found.');
 
         try {
-            new ProjectBuilder()->build(new Project($root, $root . '/vendor'), 'skernel-missing-php', $output);
+            new ProjectBuilder()->build(
+                new Project($root, $root . '/vendor', null, null),
+                'skernel-missing-php',
+                $output,
+            );
         } finally {
             self::assertSame('', $output->fetch());
         }
@@ -125,6 +129,6 @@ final class ProjectBuilderTest extends TestCase
         $autoload = "<?php\n\n" . sprintf(self::CONTAINER, var_export($dispatcher, true)) . ($event ? self::EVENT : '');
         self::assertNotFalse(file_put_contents($directory . '/vendor/autoload.php', $autoload));
 
-        return new Project($directory, $directory . '/vendor');
+        return new Project($directory, $directory . '/vendor', null, null);
     }
 }

@@ -9,23 +9,23 @@ use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Output\OutputInterface;
 
 /**
- * Lists SKernel commands and opens the plain-text application overview with the SKernel logo.
+ * Lists SKERNEL commands and opens the plain-text application overview with the SKERNEL logo.
  */
 final class ListCommand extends ConsoleListCommand
 {
     private const string LOGO = <<<'LOGO'
-           _____ __ __                     __
-          / ___// //_/__  _________  ___  / /
-          \__ \/ ,< / _ \/ ___/ __ \/ _ \/ /
-         ___/ / /| /  __/ /  / / / /  __/ /
-        /____/_/ |_\___/_/  /_/ /_/\___/_/
+           _____ __ __ __________  _   __________
+          / ___// //_// ____/ __ \/ | / / ____/ /
+          \__ \/ ,<  / __/ / /_/ /  |/ / __/ / /
+         ___/ / /| |/ /___/ _, _/ /|  / /___/ /___
+        /____/_/ |_/_____/_/ |_/_/ |_/_____/_____/
         LOGO;
 
     protected function configure(): void
     {
         parent::configure();
 
-        $this->setDescription('List SKernel commands');
+        $this->setDescription('List SKERNEL commands');
     }
 
     protected function execute(InputInterface $input, OutputInterface $output): int

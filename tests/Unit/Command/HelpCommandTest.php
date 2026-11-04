@@ -15,12 +15,12 @@ use Symfony\Component\Console\Tester\ApplicationTester;
 
 final class HelpCommandTest extends TestCase
 {
-    public function testDescribesItselfAsSKernelHelp(): void
+    public function testDescribesItselfAsSKERNELHelp(): void
     {
         $command = new HelpCommand();
 
         self::assertSame('help', $command->getName());
-        self::assertSame('Display help for an SKernel command', $command->getDescription());
+        self::assertSame('Display help for an SKERNEL command', $command->getDescription());
     }
 
     /** @throws Exception If Console command initialization or execution fails */
@@ -36,6 +36,6 @@ final class HelpCommandTest extends TestCase
             'command'      => 'help',
             'command_name' => 'list',
         ]));
-        self::assertStringContainsString("Description:\n  List SKernel commands", $tester->getDisplay(true));
+        self::assertStringContainsString("Description:\n  List SKERNEL commands", $tester->getDisplay(true));
     }
 }

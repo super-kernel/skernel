@@ -7,7 +7,7 @@ namespace Src\Command;
 use Symfony\Component\Console\Command\HelpCommand as ConsoleHelpCommand;
 
 /**
- * Displays help for an SKernel command.
+ * Displays help for an SKERNEL command.
  */
 final class HelpCommand extends ConsoleHelpCommand
 {
@@ -15,6 +15,6 @@ final class HelpCommand extends ConsoleHelpCommand
     {
         parent::configure();
 
-        $this->setDescription('Display help for an SKernel command');
+        $this->setDescription('Display help for an SKERNEL command');
     }
 }
