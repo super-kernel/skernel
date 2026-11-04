@@ -8,10 +8,12 @@ use JsonException;
 use PHPUnit\Framework\TestCase;
 use Src\Filesystem\Directory;
 use Src\Project\ProjectLocator;
+use Src\Toolchain\DailyCache;
 use Src\Toolchain\Extensions;
 use Src\Toolchain\Home;
 use Src\Toolchain\RuntimeProvider;
 use Src\Toolchain\StaticPhpCli;
+use Src\Toolchain\ZigMirrors;
 
 use function array_filter;
 use function dirname;
@@ -101,7 +103,10 @@ final class BootstrapTest extends TestCase
 
         try {
             // Provision the managed runtime with the running PHP so that the build neither downloads nor compiles.
-            $runtime = new RuntimeProvider(new Home(), new StaticPhpCli(new Home()))->directory(
+            $runtime = new RuntimeProvider(
+                new Home(),
+                new StaticPhpCli(new Home(), new ZigMirrors(new DailyCache(new Home()))),
+            )->directory(
                 $version,
                 Extensions::required(new ProjectLocator()->locate($root)),
             );

@@ -9,9 +9,11 @@ use PHPUnit\Framework\Attributes\RequiresOperatingSystemFamily;
 use PHPUnit\Framework\TestCase;
 use RecursiveIteratorIterator;
 use Src\Filesystem\Directory;
+use Src\Toolchain\DailyCache;
 use Src\Toolchain\Home;
 use Src\Toolchain\RuntimeProvider;
 use Src\Toolchain\StaticPhpCli;
+use Src\Toolchain\ZigMirrors;
 
 use function chmod;
 use function dirname;
@@ -115,7 +117,10 @@ final class PackageCommandTest extends TestCase
         putenv('SKERNEL_HOME=' . $this->directory . '/home');
 
         try {
-            $runtime = new RuntimeProvider(new Home(), new StaticPhpCli(new Home()))->directory($this->version, [
+            $runtime = new RuntimeProvider(
+                new Home(),
+                new StaticPhpCli(new Home(), new ZigMirrors(new DailyCache(new Home()))),
+            )->directory($this->version, [
                 'phar',
             ]);
         } finally {

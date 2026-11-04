@@ -43,13 +43,13 @@ SKERNEL 把 WARNING 及以上级别的日志（包括框架的扫描汇总和异
 
 SKERNEL 用自己构建的静态 PHP 来运行和打包项目，而不是系统上的 PHP。PHP 版本写成 `major.minor`（例如 `8.4`）时，选用 php.net 上该分支的最新发布；写成 `major.minor.patch`（例如 `8.4.27`）时精确使用该版本。不指定版本时，SKERNEL 选用满足根包 `require.php` 的最新受支持 PHP 版本。
 
-构建出的 PHP 包含项目安装所需的扩展，也就是根清单中、已安装时的开发依赖中，以及每个已安装包中的 `ext-*` 要求，另外再加上 `phar`。SKERNEL 使用固定版本的 [static-php-cli](https://github.com/crazywhalecc/static-php-cli)，按平台、版本和扩展组合各构建一次，产出静态 PHP CLI 和用于独立二进制的 micro 运行时，之后重复使用。在 Linux 上，两者都静态链接 musl，可以在任何 Linux 发行版上运行；SKERNEL 用固定版本的 [Zig](https://ziglang.org) 构建它们，首次使用时校验并安装到自己的主目录中。
+构建出的 PHP 包含项目安装所需的扩展，也就是根清单中、已安装时的开发依赖中，以及每个已安装包中的 `ext-*` 要求，另外再加上 `phar`。SKERNEL 使用固定版本的 [static-php-cli](https://github.com/crazywhalecc/static-php-cli)，按平台、版本和扩展组合各构建一次，产出静态 PHP CLI 和用于独立二进制的 micro 运行时，之后重复使用。在 Linux 上，两者都静态链接 musl，可以在任何 Linux 发行版上运行；SKERNEL 用固定版本的 [Zig](https://ziglang.org) 构建它们，首次使用时校验并安装到自己的主目录中。按照 Zig 软件基金会对下载工具的要求，Zig 以随机顺序从[社区镜像](https://ziglang.org/download/community-mirrors/)下载，没有镜像能提供时才从 ziglang.org 下载。
 
 SKERNEL 下载和构建的所有内容都放在它的主目录 `~/.skernel` 中，或者环境变量 `SKERNEL_HOME` 指定的目录中：
 
 ```text
 ~/.skernel/
-├── cache/                       php.net release answers, refreshed daily
+├── cache/                       php.net release answers and Zig mirrors, refreshed daily
 ├── downloads/                   source archives, shared by every build
 ├── pkgroot/<platform>/          Zig and the other packages static-php-cli installs
 ├── runtimes/<platform>/php-<version>/<extension-hash>/
@@ -60,7 +60,7 @@ SKERNEL 下载和构建的所有内容都放在它的主目录 `~/.skernel` 中�
 └── work/<job>/                  sources and build output of one build
 ```
 
-首次构建某个运行时需要联网，还需要 static-php-cli 要求的构建工具，例如 C 编译器、`perl`、`re2c`、`autoconf`、`automake`、`cmake`、`libtool` 和 `gettext`。SKERNEL 从不安装系统软件包；构建失败时，static-php-cli 在 STDERR 上的输出会指出缺少什么，该次构建的目录会保留下来供检查。static-php-cli 的二进制和 Zig 在运行前都会按固定的 SHA-256 摘要校验；php.net 的查询结果缓存一天，php.net 无法访问时沿用缓存的结果。
+首次构建某个运行时需要联网，还需要 static-php-cli 要求的构建工具，例如 C 编译器、`perl`、`re2c`、`autoconf`、`automake`、`cmake`、`libtool` 和 `gettext`。SKERNEL 从不安装系统软件包；构建失败时，static-php-cli 在 STDERR 上的输出会指出缺少什么，该次构建的目录会保留下来供检查。static-php-cli 的二进制和 Zig 在运行前都会按固定的 SHA-256 摘要校验，所以镜像无法篡改或替换 Zig。php.net 的查询结果和 Zig 镜像列表都缓存一天，php.net 或 ziglang.org 无法访问时沿用缓存的结果。
 
 下载时使用环境变量指定的代理，规则与 curl 相同：HTTPS 用 `https_proxy` 或 `HTTPS_PROXY`，HTTP 用 `http_proxy` 或 `HTTP_PROXY`；`no_proxy` 或 `NO_PROXY` 列出不走代理的主机（以逗号分隔，包括其子域名）。SKERNEL 调用的 static-php-cli 和 Composer 也读取这些变量。
 

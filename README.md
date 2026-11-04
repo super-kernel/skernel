@@ -43,13 +43,13 @@ The keys mirror the command options: `php` applies to every command, and the `pa
 
 SKERNEL runs and packages a project with a static PHP build of its own rather than with the PHP on your system. A PHP version is given as `major.minor`, such as `8.4`, which selects that branch's latest release on php.net, or as `major.minor.patch`, such as `8.4.27`. Without a version, SKERNEL selects the latest supported PHP release that satisfies the root package's `require.php`.
 
-The build contains the PHP extensions that the project's installation requires through `ext-*` requirements in the root manifest, in its development requirements when they are installed, and in every installed package, together with `phar`. SKERNEL builds it once per platform, version, and extension set with a pinned release of [static-php-cli](https://github.com/crazywhalecc/static-php-cli), producing a static PHP CLI and a micro runtime for standalone binaries, and reuses it afterwards. On Linux, both are linked statically against musl, so they run on any Linux distribution; SKERNEL builds them with a pinned release of [Zig](https://ziglang.org), which it verifies and installs into its home on first use.
+The build contains the PHP extensions that the project's installation requires through `ext-*` requirements in the root manifest, in its development requirements when they are installed, and in every installed package, together with `phar`. SKERNEL builds it once per platform, version, and extension set with a pinned release of [static-php-cli](https://github.com/crazywhalecc/static-php-cli), producing a static PHP CLI and a micro runtime for standalone binaries, and reuses it afterwards. On Linux, both are linked statically against musl, so they run on any Linux distribution; SKERNEL builds them with a pinned release of [Zig](https://ziglang.org), which it verifies and installs into its home on first use. As the Zig Software Foundation asks of tools, Zig is downloaded from the [community mirrors](https://ziglang.org/download/community-mirrors/) in random order, and from ziglang.org only when no mirror serves it.
 
 Everything SKERNEL downloads and builds lives in its home directory, `~/.skernel`, or the directory given by the `SKERNEL_HOME` environment variable:
 
 ```text
 ~/.skernel/
-├── cache/                       php.net release answers, refreshed daily
+├── cache/                       php.net release answers and Zig mirrors, refreshed daily
 ├── downloads/                   source archives, shared by every build
 ├── pkgroot/<platform>/          Zig and the other packages static-php-cli installs
 ├── runtimes/<platform>/php-<version>/<extension-hash>/
@@ -60,7 +60,7 @@ Everything SKERNEL downloads and builds lives in its home directory, `~/.skernel
 └── work/<job>/                  sources and build output of one build
 ```
 
-The first build of a runtime needs network access and the build tools that static-php-cli requires, such as a C compiler, `perl`, `re2c`, `autoconf`, `automake`, `cmake`, `libtool`, and `gettext`. SKERNEL never installs system packages; when a build fails, static-php-cli's output on STDERR names what is missing, and the job's directory is kept for inspection. The static-php-cli binary and Zig are verified against their pinned SHA-256 digests before they run, and php.net answers are cached for a day and reused when php.net cannot be reached.
+The first build of a runtime needs network access and the build tools that static-php-cli requires, such as a C compiler, `perl`, `re2c`, `autoconf`, `automake`, `cmake`, `libtool`, and `gettext`. SKERNEL never installs system packages; when a build fails, static-php-cli's output on STDERR names what is missing, and the job's directory is kept for inspection. The static-php-cli binary and Zig are verified against their pinned SHA-256 digests before they run, so a mirror can neither alter nor replace Zig. php.net answers and the Zig mirror list are cached for a day and reused when php.net or ziglang.org cannot be reached.
 
 Downloads go through the proxy that the environment names, as with curl: `https_proxy` or `HTTPS_PROXY` for HTTPS, `http_proxy` or `HTTP_PROXY` for HTTP, and `no_proxy` or `NO_PROXY` for the comma-separated hosts, with their subdomains, that bypass it. static-php-cli and Composer, which SKERNEL runs, read the same variables.
 

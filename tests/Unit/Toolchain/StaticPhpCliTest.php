@@ -5,9 +5,11 @@ declare(strict_types=1);
 namespace Src\Tests\Unit\Toolchain;
 
 use PHPUnit\Framework\Attributes\RequiresOperatingSystemFamily;
+use Src\Toolchain\DailyCache;
 use Src\Toolchain\Home;
 use Src\Toolchain\Platform;
 use Src\Toolchain\StaticPhpCli;
+use Src\Toolchain\ZigMirrors;
 use Symfony\Component\Console\Output\BufferedOutput;
 
 use function chmod;
@@ -23,7 +25,7 @@ final class StaticPhpCliTest extends ToolchainTestCase
 {
     public function testRunsWithTheInstalledZigForAStaticMuslTarget(): void
     {
-        $staticPhpCli = new StaticPhpCli(new Home());
+        $staticPhpCli = new StaticPhpCli(new Home(), new ZigMirrors(new DailyCache(new Home())));
         $packages = $this->home . '/pkgroot/' . Platform::current();
         $this->executable(
             $this->home . '/tools/spc/' . $staticPhpCli->version() . '/spc',
