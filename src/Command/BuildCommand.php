@@ -5,10 +5,6 @@ declare(strict_types=1);
 namespace Src\Command;
 
 use Src\Build\ProjectBuilder;
-use Src\Configuration\ConfigurationLoader;
-use Src\Project\ProjectLocator;
-use Src\Toolchain\ManagedPhp;
-use Src\Toolchain\PhpVersion;
 use SuperKernel\Command\Attribute\Command as AttributeCommand;
 use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Exception\RuntimeException;
@@ -26,10 +22,8 @@ use function sprintf;
 final class BuildCommand extends Command
 {
     public function __construct(
-        private readonly ProjectLocator      $projectLocator,
-        private readonly ConfigurationLoader $configurationLoader,
-        private readonly ManagedPhp          $managedPhp,
-        private readonly ProjectBuilder      $projectBuilder,
+        private readonly ProjectRuntime $projectRuntime,
+        private readonly ProjectBuilder $projectBuilder,
     )
     {
         parent::__construct();
@@ -51,19 +45,8 @@ final class BuildCommand extends Command
      */
     protected function execute(InputInterface $input, OutputInterface $output): int
     {
-        $project = $this->projectLocator->locate($input->getOption('working-dir'));
-        $php = $input->getOption('php');
-
-        if (null !== $php && !PhpVersion::isValid($php)) {
-            throw new RuntimeException('The --php option must be a PHP version such as 8.4 or 8.4.27.');
-        }
-
         $errorOutput = $output instanceof ConsoleOutputInterface ? $output->getErrorOutput() : $output;
-        $runtime = $this->managedPhp->runtime(
-            $project,
-            $php ?? $this->configurationLoader->load($project->directory)->php,
-            $errorOutput,
-        );
+        [$project, $runtime] = $this->projectRuntime->resolve($input, $errorOutput);
         $status = $this->projectBuilder->build($project, $runtime->php, $errorOutput);
 
         if (0 !== $status) {

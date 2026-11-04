@@ -7,7 +7,7 @@
 `super-kernel/skernel` 即 SKERNEL，是 SuperKernel 应用的命令行项目工具，作用相当于 Java 项目中的 Maven。它本身也是用 SuperKernel 构建的控制台应用，计划以独立的二进制文件发布。
 
 > [!NOTE]
-> SKERNEL 仍在积极开发中。目前提供 `build` 和 `package` 命令；创建、运行、清理项目以及更新 SKERNEL 自身的命令还没有实现。控制台另有 SKERNEL 自己的 `help` 和 `list` 命令、Symfony Console 的 `completion` 命令，以及 `--version` 选项。二进制文件将通过本仓库的 GitHub Releases 和 Packages 发布，目前还没有发布任何内容。
+> SKERNEL 仍在积极开发中。目前提供 `new`、`run`、`build`、`package`、`clean` 和 `self-update` 命令。控制台另有 SKERNEL 自己的 `help` 和 `list` 命令、Symfony Console 的 `completion` 命令，以及 `--version` 选项。二进制文件将通过本仓库的 GitHub Releases 和 Packages 发布，目前还没有发布任何内容。
 
 ## 控制台
 
@@ -68,6 +68,52 @@ SKERNEL 下载和构建的所有内容都放在它的主目录 `~/.skernel` 中�
 
 ## 命令
 
+### new
+
+```text
+new <directory> [--composer=<binary>]
+```
+
+`new` 用 Composer 的 `create-project` 命令，从 [`super-kernel/skeleton`](https://github.com/super-kernel/skeleton) 包在 `<directory>` 创建项目；相对路径以全局选项 `-d`/`--working-dir` 或当前目录为基准。不会按运行 Composer 的 PHP 检查平台要求，因为项目运行在它的受管 PHP 上。
+
+指定 `--composer` 时使用该程序。否则 SKERNEL 使用找到的第一个可用的 Composer 2：先找 `PATH` 中的 `composer` 或 `composer.phar`，再找 `~/.local/bin/composer`、`~/bin/composer`、`~/.config/composer/vendor/bin/composer` 和 `~/.composer/vendor/bin/composer`。都没有时，它把固定版本的 Composer 下载到自己的主目录，按 SHA-256 摘要校验，再用受管 PHP 运行；这个 PHP 在首次使用时构建。
+
+```text
+Project created in /path/to/my-app.
+```
+
+目录已存在且不为空、找不到 Composer 或 Composer 执行失败、无法提供受管 PHP 时，会在 STDERR 上打印一条简短的提示，退出码为 1。
+
+### run
+
+```text
+run [-d|--working-dir=<dir>] [--php=<version>] [--watch] [--] [<arguments>...]
+```
+
+`run` 用受管 PHP 从源码运行项目，在项目目录中以单独的进程执行。`<arguments>` 传给应用，所以 `run swoole:start` 会启动它的 Swoole 服务；要传给应用的选项放在 `--` 之后。不加 `--watch` 时，SKERNEL 以应用的退出码退出。
+
+加上 `--watch` 后，项目文件变化时 SKERNEL 会重启应用。它每秒检查一次 PHP 文件、`.env` 和 `.env.*` 文件以及 `composer.lock` 的变化，并跳过 vendor 目录、`target/` 和名称以点开头的目录，所以运行中的应用写入日志和缓存不会触发重启。重启时先向应用发送 SIGTERM，10 秒后发送 SIGKILL。应用自行退出后，下一次变化会再次启动它。
+
+SIGINT 和 SIGTERM 会先停止应用，SKERNEL 再退出。出现 `build` 的任一种失败或应用无法启动时，会在 STDERR 上打印一条简短的提示，退出码为 1。
+
+### clean
+
+```text
+clean [-d|--working-dir=<dir>]
+```
+
+`clean` 删除项目的 `target/` 目录和 `<vendor>/.cache` 扫描缓存，并说明删除了什么。用 `--output` 或 `package.output` 设置写到其他位置的包不会被删除。项目的依赖不必已安装。
+
+### self-update
+
+```text
+self-update
+```
+
+`self-update` 把独立的 SKERNEL 替换为[最新 GitHub Release](https://github.com/super-kernel/skernel/releases/latest) 中名为 `skernel-<platform>` 的二进制，例如 `skernel-linux-x86_64`。下载内容按 GitHub 报告的 SHA-256 摘要校验，二进制保留原有权限。摘要相同时说明 SKERNEL 已是最新，不会下载。
+
+从源码运行、无法读取最新 Release 或其中没有当前平台可校验的二进制、无法替换二进制时，会在 STDERR 上打印一条简短的提示，退出码为 1。目前还没有发布任何 Release。
+
 ### build
 
 ```text
@@ -109,7 +155,7 @@ Package written to /path/to/my-app/target/my-app.
 
 ## 环境要求
 
-- PHP `>=8.4.27 <8.5`，并带有 `openssl`、`phar` 和 `zlib` 扩展；安装时由 Composer 检查所需的 PHP 扩展。
+- PHP `>=8.4.27 <8.5`，并带有 `openssl`、`pcntl`、`phar` 和 `zlib` 扩展；安装时由 Composer 检查所需的 PHP 扩展。
 - 首次构建受管 PHP 时需要联网，以及 static-php-cli 的构建工具，详见[受管 PHP](#受管-php)。
 - `package` 需要 Composer。
 
