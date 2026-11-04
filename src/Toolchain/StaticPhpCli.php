@@ -29,10 +29,10 @@ use function unlink;
  * Runs the pinned static-php-cli release, downloading and verifying its self-contained binary on first use.
  *
  * Its downloads and packages live in the SKERNEL home; sources and build output stay in the caller's job. On Linux it
- * builds statically linked musl binaries with a pinned Zig release, which is downloaded from a Zig community mirror or
- * ziglang.org, verified, and installed into its package root before the first run, so no system toolchain has to be
- * installed with sudo. static-php-cli also installs its own pkg-config there, as its doctor command would; SKERNEL
- * never runs that command, which may try to install system packages with sudo.
+ * builds statically linked musl binaries for the architecture's baseline CPU with a pinned Zig release, which is
+ * downloaded from a Zig community mirror or ziglang.org, verified, and installed into its package root before the first
+ * run, so no system toolchain has to be installed with sudo. static-php-cli also installs its own pkg-config there,
+ * as its doctor command would; SKERNEL never runs that command, which may try to install system packages with sudo.
  */
 final readonly class StaticPhpCli
 {
@@ -40,18 +40,21 @@ final readonly class StaticPhpCli
 
     private const string RELEASES = 'https://github.com/crazywhalecc/static-php-cli/releases/download/';
 
-    /** The Zig release that static-php-cli VERSION builds with */
-    private const string ZIG = '0.16.0';
+    /**
+     * The Zig release that static-php-cli VERSION builds with. Zig 0.16 cannot build micro: its memchr reads past the
+     * end of a string, which crashes the realpath call that micro makes at startup on the path at the top of its stack.
+     */
+    private const string ZIG = '0.17.1';
 
     /** @var array<string, array{string, string}> Zig archive and SHA-256 digest by Linux platform */
     private const array ZIG_ASSETS = [
         'linux-aarch64' => [
-            'zig-aarch64-linux-0.16.0.tar.xz',
-            'ea4b09bfb22ec6f6c6ceac57ab63efb6b46e17ab08d21f69f3a48b38e1534f17',
+            'zig-aarch64-linux-0.17.1.tar.xz',
+            'a1546d5646eb184437918d6635ca6b762a0e889eac09cef720ee7a1ed3fe7795',
         ],
         'linux-x86_64' => [
-            'zig-x86_64-linux-0.16.0.tar.xz',
-            '70e49664a74374b48b51e6f3fdfbf437f6395d42509050588bd49abe52ba3d00',
+            'zig-x86_64-linux-0.17.1.tar.xz',
+            '3581863e3cbcfd0fce0efc682ce7e9e93da96668a977791d356a26d2a7e9b17a',
         ],
     ];
 
@@ -161,14 +164,14 @@ final readonly class StaticPhpCli
         ];
 
         if (isset(self::ZIG_ASSETS[$platform])) {
-            $environment['SPC_TARGET'] = 'native-native-musl';
+            // An explicit architecture builds for its baseline CPU; a native target needs the features of this one.
+            $environment['SPC_TARGET'] = substr($platform, strlen('linux-')) . '-linux-musl';
             $this->installZig($executable, $platform, $job, $environment, $output);
         }
 
-        if (!str_starts_with(
-            $platform,
-            'windows-',
-        ) && !is_executable($environment['PKG_ROOT_PATH'] . '/bin/pkg-config')) {
+        $pkgConfig = $environment['PKG_ROOT_PATH'] . '/bin/pkg-config';
+
+        if (!str_starts_with($platform, 'windows-') && !is_executable($pkgConfig)) {
             $status = ProcessRunner::run([
                 $executable,
                 'install-pkg',

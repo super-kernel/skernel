@@ -154,7 +154,7 @@ final class ZigMirrorsTest extends ToolchainTestCase
     private function download(): void
     {
         new ZigMirrors(new DailyCache(new Home()))->download(
-            '0.16.0',
+            '0.17.1',
             self::ASSET,
             $this->home . '/' . self::ASSET,
             hash('sha256', self::ARCHIVE),

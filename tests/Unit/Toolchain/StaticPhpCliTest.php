@@ -17,6 +17,8 @@ use function chmod;
 use function dirname;
 use function file_put_contents;
 use function mkdir;
+use function strlen;
+use function substr;
 
 /**
  * Runs a recording static-php-cli script with a Zig that is installed already, so that nothing is downloaded.
@@ -39,7 +41,7 @@ final class StaticPhpCliTest extends ToolchainTestCase
             '--for-extensions=phar',
         ], $job, $output));
         self::assertSame(
-            'download --for-extensions=phar|native-native-musl|' . $packages . '|' . $job . "/source\n",
+            'download --for-extensions=phar|' . self::target() . '|' . $packages . '|' . $job . "/source\n",
             $output->fetch(),
         );
     }
@@ -55,8 +57,8 @@ final class StaticPhpCliTest extends ToolchainTestCase
             'download',
         ], $job, $output));
         self::assertSame(
-            'install-pkg pkg-config|native-native-musl|' . $packages . '|' . $job . "/source\n"
-            . 'download|native-native-musl|' . $packages . '|' . $job . "/source\n",
+            'install-pkg pkg-config|' . self::target() . '|' . $packages . '|' . $job . "/source\n"
+            . 'download|' . self::target() . '|' . $packages . '|' . $job . "/source\n",
             $output->fetch(),
         );
     }
@@ -79,7 +81,7 @@ final class StaticPhpCliTest extends ToolchainTestCase
         $staticPhpCli = new StaticPhpCli(new Home(), new ZigMirrors(new DailyCache(new Home())));
         $packages = $this->home . '/pkgroot/' . Platform::current();
         $this->executable($this->home . '/tools/spc/' . $staticPhpCli->version() . '/spc', $script);
-        $this->executable($packages . '/zig/zig', 'echo 0.16.0');
+        $this->executable($packages . '/zig/zig', 'echo 0.17.1');
 
         foreach ([
             'zig-cc',
@@ -93,6 +95,11 @@ final class StaticPhpCliTest extends ToolchainTestCase
         }
 
         return $staticPhpCli;
+    }
+
+    private static function target(): string
+    {
+        return substr(Platform::current(), strlen('linux-')) . '-linux-musl';
     }
 
     private function job(): string
