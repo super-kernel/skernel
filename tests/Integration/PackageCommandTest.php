@@ -10,6 +10,8 @@ use PHPUnit\Framework\TestCase;
 use RecursiveIteratorIterator;
 use Src\Filesystem\Directory;
 use Src\Toolchain\DailyCache;
+use Src\Toolchain\ExtensionRequirements;
+use Src\Toolchain\ExtensionVersions;
 use Src\Toolchain\Home;
 use Src\Toolchain\RuntimeProvider;
 use Src\Toolchain\StaticPhpCli;
@@ -120,9 +122,10 @@ final class PackageCommandTest extends TestCase
             $runtime = new RuntimeProvider(
                 new Home(),
                 new StaticPhpCli(new Home(), new ZigMirrors(new DailyCache(new Home()))),
-            )->directory($this->version, [
+                new ExtensionVersions(new DailyCache(new Home())),
+            )->directory($this->version, new ExtensionRequirements([
                 'phar',
-            ]);
+            ]));
         } finally {
             putenv('SKERNEL_HOME');
         }

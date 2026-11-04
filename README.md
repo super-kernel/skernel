@@ -45,11 +45,13 @@ SKERNEL runs and packages a project with a static PHP build of its own rather th
 
 The build contains the PHP extensions that the project's installation requires through `ext-*` requirements in the root manifest, in its development requirements when they are installed, and in every installed package, together with `phar`. SKERNEL builds it once per platform, version, and extension set with a pinned release of [static-php-cli](https://github.com/crazywhalecc/static-php-cli), producing a static PHP CLI and a micro runtime for standalone binaries, and reuses it afterwards. The micro runtime reports `cli` as `PHP_SAPI`, so a standalone binary starts what requires the CLI, such as a Swoole server. On Linux, both are linked statically against musl and compiled for the architecture's baseline CPU, so they do not depend on the Linux distribution; SKERNEL builds them with a pinned release of [Zig](https://ziglang.org), which it verifies and installs into its home on first use. As the Zig Software Foundation asks of tools, Zig is downloaded from the [community mirrors](https://ziglang.org/download/community-mirrors/) in random order, moving on from a mirror that is too slow, and from ziglang.org only when no mirror serves it.
 
+When the installation limits the version of `ext-swoole` or `ext-redis`, through a requirement or a conflict, SKERNEL builds the latest stable PECL release that it accepts. Any other extension is built at the version static-php-cli selects, and a build that ends up with an extension version the installation does not accept fails instead of being used.
+
 Everything SKERNEL downloads and builds lives in its home directory, `~/.skernel`, or the directory given by the `SKERNEL_HOME` environment variable:
 
 ```text
 ~/.skernel/
-├── cache/                       php.net release answers and Zig mirrors, refreshed daily
+├── cache/                       php.net and PECL release answers and Zig mirrors, refreshed daily
 ├── downloads/                   source archives, shared by every build
 ├── pkgroot/<platform>/          Zig and the other packages static-php-cli installs
 ├── runtimes/<platform>/php-<version>/<extension-hash>/
@@ -60,7 +62,7 @@ Everything SKERNEL downloads and builds lives in its home directory, `~/.skernel
 └── work/<job>/                  sources and build output of one build
 ```
 
-The first build of a runtime needs network access and the build tools that static-php-cli requires, such as a C compiler, `perl`, `re2c`, `autoconf`, `automake`, `cmake`, `libtool`, and `gettext`. SKERNEL never installs system packages; when a build fails, static-php-cli's output on STDERR names what is missing, and the job's directory is kept for inspection. The static-php-cli binary and Zig are verified against their pinned SHA-256 digests before they run, so a mirror can neither alter nor replace Zig. php.net answers and the Zig mirror list are cached for a day and reused when php.net or ziglang.org cannot be reached.
+The first build of a runtime needs network access and the build tools that static-php-cli requires, such as a C compiler, `perl`, `re2c`, `autoconf`, `automake`, `cmake`, `libtool`, and `gettext`. SKERNEL never installs system packages; when a build fails, static-php-cli's output on STDERR names what is missing, and the job's directory is kept for inspection. The static-php-cli binary and Zig are verified against their pinned SHA-256 digests before they run, so a mirror can neither alter nor replace Zig. php.net and PECL answers and the Zig mirror list are cached for a day and reused when those sites cannot be reached.
 
 Downloads go through the proxy that the environment names, as with curl: `https_proxy` or `HTTPS_PROXY` for HTTPS, `http_proxy` or `HTTP_PROXY` for HTTP, and `no_proxy` or `NO_PROXY` for the comma-separated hosts, with their subdomains, that bypass it. static-php-cli and Composer, which SKERNEL runs, read the same variables.
 

@@ -45,11 +45,13 @@ SKERNEL 用自己构建的静态 PHP 来运行和打包项目，而不是系统�
 
 构建出的 PHP 包含项目安装所需的扩展，也就是根清单中、已安装时的开发依赖中，以及每个已安装包中的 `ext-*` 要求，另外再加上 `phar`。SKERNEL 使用固定版本的 [static-php-cli](https://github.com/crazywhalecc/static-php-cli)，按平台、版本和扩展组合各构建一次，产出静态 PHP CLI 和用于独立二进制的 micro 运行时，之后重复使用。micro 运行时把 `PHP_SAPI` 报告为 `cli`，所以独立二进制可以启动要求 CLI 的功能，例如 Swoole 服务。在 Linux 上，两者都静态链接 musl，并按该架构的基线 CPU 编译，不依赖具体的 Linux 发行版；SKERNEL 用固定版本的 [Zig](https://ziglang.org) 构建它们，首次使用时校验并安装到自己的主目录中。按照 Zig 软件基金会对下载工具的要求，Zig 以随机顺序从[社区镜像](https://ziglang.org/download/community-mirrors/)下载，某个镜像太慢就换下一个，没有镜像能提供时才从 ziglang.org 下载。
 
+当项目安装通过要求或冲突限制了 `ext-swoole` 或 `ext-redis` 的版本时，SKERNEL 会构建它接受的最新 PECL 稳定版。其他扩展使用 static-php-cli 选择的版本；如果构建出的扩展版本不被项目安装接受，构建会失败，而不是继续使用。
+
 SKERNEL 下载和构建的所有内容都放在它的主目录 `~/.skernel` 中，或者环境变量 `SKERNEL_HOME` 指定的目录中：
 
 ```text
 ~/.skernel/
-├── cache/                       php.net release answers and Zig mirrors, refreshed daily
+├── cache/                       php.net and PECL release answers and Zig mirrors, refreshed daily
 ├── downloads/                   source archives, shared by every build
 ├── pkgroot/<platform>/          Zig and the other packages static-php-cli installs
 ├── runtimes/<platform>/php-<version>/<extension-hash>/
@@ -60,7 +62,7 @@ SKERNEL 下载和构建的所有内容都放在它的主目录 `~/.skernel` 中�
 └── work/<job>/                  sources and build output of one build
 ```
 
-首次构建某个运行时需要联网，还需要 static-php-cli 要求的构建工具，例如 C 编译器、`perl`、`re2c`、`autoconf`、`automake`、`cmake`、`libtool` 和 `gettext`。SKERNEL 从不安装系统软件包；构建失败时，static-php-cli 在 STDERR 上的输出会指出缺少什么，该次构建的目录会保留下来供检查。static-php-cli 的二进制和 Zig 在运行前都会按固定的 SHA-256 摘要校验，所以镜像无法篡改或替换 Zig。php.net 的查询结果和 Zig 镜像列表都缓存一天，php.net 或 ziglang.org 无法访问时沿用缓存的结果。
+首次构建某个运行时需要联网，还需要 static-php-cli 要求的构建工具，例如 C 编译器、`perl`、`re2c`、`autoconf`、`automake`、`cmake`、`libtool` 和 `gettext`。SKERNEL 从不安装系统软件包；构建失败时，static-php-cli 在 STDERR 上的输出会指出缺少什么，该次构建的目录会保留下来供检查。static-php-cli 的二进制和 Zig 在运行前都会按固定的 SHA-256 摘要校验，所以镜像无法篡改或替换 Zig。php.net 和 PECL 的查询结果以及 Zig 镜像列表都缓存一天，这些站点无法访问时沿用缓存的结果。
 
 下载时使用环境变量指定的代理，规则与 curl 相同：HTTPS 用 `https_proxy` 或 `HTTPS_PROXY`，HTTP 用 `http_proxy` 或 `HTTP_PROXY`；`no_proxy` 或 `NO_PROXY` 列出不走代理的主机（以逗号分隔，包括其子域名）。SKERNEL 调用的 static-php-cli 和 Composer 也读取这些变量。
 
