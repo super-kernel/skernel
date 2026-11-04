@@ -111,6 +111,7 @@ final class PackageCommandTest extends TestCase
         $this->write($this->project . '/target/stale', 'stale');
         $this->write($this->directory . '/bin/composer', implode("\n", [
             '#!/bin/sh',
+            'if [ "$1" = --version ]; then echo "Composer version 2.10.3"; exit 0; fi',
             'printf "%s" "$*" > ' . escapeshellarg($this->directory . '/composer-arguments'),
             'cp -R ' . escapeshellarg($this->directory . '/template/vendor') . ' vendor',
             '',
@@ -220,6 +221,25 @@ final class PackageCommandTest extends TestCase
             'Package written to ' . $this->project . '/target/demo.phar.',
         ], $output);
         self::assertDirectoryDoesNotExist($this->project . '/vendor');
+    }
+
+    public function testFindsAWorkingComposerWhenNoneIsGiven(): void
+    {
+        exec(
+            'PATH=' . escapeshellarg($this->directory . '/bin:/usr/bin:/bin')
+            . ' HOME=' . escapeshellarg($this->directory)
+            . ' SKERNEL_HOME=' . escapeshellarg($this->directory . '/home') . ' '
+            . escapeshellarg(PHP_BINARY) . ' ' . escapeshellarg(dirname(__DIR__, 2) . '/bin/bootstrap.php')
+            . ' package --phar --php=' . $this->version . ' -d ' . escapeshellarg($this->project) . ' 2>/dev/null',
+            $output,
+            $status,
+        );
+
+        self::assertSame(0, $status, implode("\n", $output));
+        self::assertStringStartsWith(
+            'install --no-interaction',
+            (string) file_get_contents($this->directory . '/composer-arguments'),
+        );
     }
 
     public function testRejectsAProjectWithoutALockFile(): void

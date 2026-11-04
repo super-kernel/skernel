@@ -13,7 +13,7 @@
 
 Running SKERNEL without a command, or with `list`, prints the SKERNEL logo above the plain-text overview of the available commands. The raw, JSON, XML, and Markdown listings, namespace listings, and command help omit the logo. `--version` prints `SKERNEL`, followed by the version when the package declares one.
 
-SKERNEL writes log records of WARNING and above, including the framework's scan summaries and exception reports, to STDERR, so STDOUT carries only command output; for example, `list --format=json` writes plain JSON to STDOUT.
+SKERNEL writes log records of WARNING and above, including the framework's exception reports, to STDERR, so STDOUT carries only command output; for example, `list --format=json` writes plain JSON to STDOUT.
 
 A usage error, such as an unknown command or option, prints a short message on STDERR, followed by the running command's synopsis when a command's input is invalid, and exits with status 1. Add `-v` to also print the exception class and trace.
 
@@ -140,7 +140,7 @@ package [-d|--working-dir=<dir>] [--php=<version>] [--phar] [--dev] [--output=<p
 `package` turns the project into a standalone executable binary, or into a PHAR with `--phar`. It works on a temporary copy of the project, so the project itself is not changed:
 
 1. It copies the project without its vendor directory, VCS metadata such as `.git`, its `target/` directory, and the `.env` and `.env.*` files in its root directory, which usually hold machine-local secrets; a packaged application reads its environment from the process environment.
-2. It installs the copy's dependencies from the project's `composer.lock` with the Composer binary given with `--composer`, a path or a name looked up in `PATH`, by default `composer`. Development dependencies are left out unless `--dev` is given. The project must have a `composer.lock`, but its own dependencies need not be installed. Composer does not check platform requirements against the PHP that runs it, because the managed PHP is the package's platform.
+2. It installs the copy's dependencies from the project's `composer.lock` with the Composer that [`new`](#new) would use: the binary given with `--composer`, a path or a name looked up in `PATH`, or else the first working Composer 2 it finds, or else its own. Development dependencies are left out unless `--dev` is given. The project must have a `composer.lock`, but its own dependencies need not be installed. Composer does not check platform requirements against the PHP that runs it, because the managed PHP is the package's platform.
 3. It runs `build` on the copy with the managed PHP of that installation.
 4. It archives the copy into a PHAR whose stub loads the copy's autoloader, obtains the application container, and runs the application, so no entry script is needed.
 5. It writes the managed micro runtime, or the file given with `--runtime`, followed by the PHAR to the output path, or only the PHAR with `--phar`, and makes the result executable. A micro runtime given with `--runtime` must report `cli` as `PHP_SAPI` for the result to start a Swoole server; with static-php-cli, build it with `--with-micro-fake-cli`.
@@ -157,7 +157,6 @@ A missing `composer.lock`, a runtime file that is not found, a failed installati
 
 - PHP `>=8.4.27 <8.5` with the `openssl`, `pcntl`, `phar`, and `zlib` extensions; Composer checks the required PHP extensions during installation.
 - Network access and static-php-cli's build tools the first time a managed PHP is built, as described under [Managed PHP](#managed-php).
-- Composer for `package`.
 
 ## Running from source
 
