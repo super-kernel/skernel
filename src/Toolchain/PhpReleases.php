@@ -37,7 +37,7 @@ final readonly class PhpReleases
         }
 
         if (null !== $requested) {
-            $release = $this->index->get($requested, 'index.php?json&version=' . $requested . '&max=1');
+            $release = $this->index->get($requested, 'index.php?json&version=' . $requested);
 
             if (!is_array($release) || !is_string($release['version'] ?? null)) {
                 throw new RuntimeException(sprintf('php.net lists no PHP %s release.', $requested));
