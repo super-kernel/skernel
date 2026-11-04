@@ -85,6 +85,14 @@ final class BootstrapTest extends TestCase
         self::assertSame('SKERNEL', $listing['application']['name']);
     }
 
+    public function testScanDiagnosticsOfSKERNELItselfAreNotWritten(): void
+    {
+        $output = $this->bootstrap('--version', $status, '2>&1 >/dev/null');
+
+        self::assertSame(0, $status, implode("\n", $output));
+        self::assertSame([], $output);
+    }
+
     public function testLogRecordsBelowWarningAreNotWritten(): void
     {
         $output = $this->bootstrap('list --format=json', $status, '2>&1 >/dev/null');
