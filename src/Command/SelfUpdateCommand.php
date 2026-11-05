@@ -37,13 +37,17 @@ final class SelfUpdateCommand extends Command
             throw new RuntimeException('SKERNEL is running from source; update it with Git instead.');
         }
 
-        $tag = $this->selfUpdater->update($binary);
+        $tag = $this->selfUpdater->update($binary, (string) $this->getApplication()?->getVersion());
 
-        $output->writeln(
-            null === $tag ? 'SKERNEL is up to date.' : sprintf('SKERNEL updated to %s.', $tag),
-            OutputInterface::OUTPUT_RAW,
-        );
+        if (null === $tag) {
+            $output->writeln('SKERNEL is up to date.', OutputInterface::OUTPUT_RAW);
 
-        return self::SUCCESS;
+            return self::SUCCESS;
+        }
+
+        $output->writeln(sprintf('SKERNEL updated to %s.', $tag), OutputInterface::OUTPUT_RAW);
+
+        // The PHAR of this process has been replaced, so loading one more class from it would read the wrong bytes.
+        exit(self::SUCCESS);
     }
 }
