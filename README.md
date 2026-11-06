@@ -4,7 +4,7 @@
 
 # SKERNEL
 
-`super-kernel/skernel` is SKERNEL, the command-line project tool for SuperKernel applications, filling the role that Maven plays for Java projects. It is itself built as a SuperKernel console application and is intended to be distributed as a standalone binary.
+`super-kernel/skernel` is SKERNEL, the command-line project tool for SuperKernel applications, filling the role that Maven plays for Java projects. It is itself built as a SuperKernel console application and is distributed as a standalone binary.
 
 > [!NOTE]
 > SKERNEL is under active development. It provides the `new`, `run`, `build`, `package`, `clean`, and `self-update` commands. Its console also offers SKERNEL's `help` and `list` commands, Symfony Console's `completion` command, and the `--version` option. Binaries are published through this repository's [GitHub Releases](https://github.com/super-kernel/skernel/releases).
