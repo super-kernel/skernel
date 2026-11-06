@@ -7,7 +7,17 @@
 `super-kernel/skernel` 即 SKERNEL，是 SuperKernel 应用的命令行项目工具，作用相当于 Java 项目中的 Maven。它本身也是用 SuperKernel 构建的控制台应用，计划以独立的二进制文件发布。
 
 > [!NOTE]
-> SKERNEL 仍在积极开发中。目前提供 `new`、`run`、`build`、`package`、`clean` 和 `self-update` 命令。控制台另有 SKERNEL 自己的 `help` 和 `list` 命令、Symfony Console 的 `completion` 命令，以及 `--version` 选项。二进制文件将通过本仓库的 GitHub Releases 和 Packages 发布，目前还没有发布任何内容。
+> SKERNEL 仍在积极开发中。目前提供 `new`、`run`、`build`、`package`、`clean` 和 `self-update` 命令。控制台另有 SKERNEL 自己的 `help` 和 `list` 命令、Symfony Console 的 `completion` 命令，以及 `--version` 选项。二进制文件通过本仓库的 [GitHub Releases](https://github.com/super-kernel/skernel/releases) 发布。
+
+## 安装
+
+从[最新发布](https://github.com/super-kernel/skernel/releases/latest)下载适合你平台的二进制，平台有 `linux-x86_64`、`linux-aarch64`、`macos-aarch64` 和 `macos-x86_64`。它不需要 PHP。
+
+```bash
+curl -fsSL -o skernel https://github.com/super-kernel/skernel/releases/latest/download/skernel-linux-x86_64
+chmod +x skernel
+./skernel --version
+```
 
 ## 控制台
 
@@ -110,9 +120,9 @@ clean [-d|--working-dir=<dir>]
 self-update
 ```
 
-`self-update` 把独立的 SKERNEL 替换为[最新 GitHub Release](https://github.com/super-kernel/skernel/releases/latest) 中名为 `skernel-<platform>` 的二进制，例如 `skernel-linux-x86_64`。下载内容按 GitHub 报告的 SHA-256 摘要校验，二进制保留原有权限。摘要相同时说明 SKERNEL 已是最新，不会下载。
+`self-update` 把独立的 SKERNEL 替换为[最新 GitHub Release](https://github.com/super-kernel/skernel/releases/latest) 中名为 `skernel-<platform>` 的二进制，例如 `skernel-linux-x86_64`。下载内容按 GitHub 报告的 SHA-256 摘要校验，二进制保留原有权限。SKERNEL 已经是该版本时不会下载；其他任何版本都会被替换。
 
-从源码运行、无法读取最新 Release 或其中没有当前平台可校验的二进制、无法替换二进制时，会在 STDERR 上打印一条简短的提示，退出码为 1。目前还没有发布任何 Release。
+从源码运行、无法读取最新 Release 或其中没有当前平台可校验的二进制、无法替换二进制时，会在 STDERR 上打印一条简短的提示，退出码为 1。
 
 ### build
 
@@ -161,12 +171,12 @@ Package written to /path/to/my-app/target/my-app.
 
 ## 环境要求
 
-- PHP `>=8.4.27 <8.5`，并带有 `openssl`、`pcntl`、`phar` 和 `zlib` 扩展；安装时由 Composer 检查所需的 PHP 扩展。
+- PHP `>=8.4.27 <8.5`，并带有 `openssl`、`pcntl`、`phar` 和 `zlib` 扩展，仅在从源码运行 SKERNEL 时需要；安装时由 Composer 检查所需的 PHP 扩展。
 - 首次构建受管 PHP 时需要联网，以及 static-php-cli 的构建工具，详见[受管 PHP](#受管-php)。
 
 ## 从源码运行
 
-在二进制文件发布之前，请从本仓库的克隆中运行 SKERNEL。SuperKernel 根据工作目录识别应用的根目录，所以请在 SKERNEL 自己的目录中启动它，再用 `-d` 选择要处理的项目：
+要开发 SKERNEL 本身，请从本仓库的克隆中运行它。SuperKernel 根据工作目录识别应用的根目录，所以请在 SKERNEL 自己的目录中启动它，再用 `-d` 选择要处理的项目：
 
 ```bash
 git clone https://github.com/super-kernel/skernel.git

@@ -7,7 +7,17 @@
 `super-kernel/skernel` is SKERNEL, the command-line project tool for SuperKernel applications, filling the role that Maven plays for Java projects. It is itself built as a SuperKernel console application and is intended to be distributed as a standalone binary.
 
 > [!NOTE]
-> SKERNEL is under active development. It provides the `new`, `run`, `build`, `package`, `clean`, and `self-update` commands. Its console also offers SKERNEL's `help` and `list` commands, Symfony Console's `completion` command, and the `--version` option. Binaries will be published through this repository's GitHub Releases and Packages; nothing has been published yet.
+> SKERNEL is under active development. It provides the `new`, `run`, `build`, `package`, `clean`, and `self-update` commands. Its console also offers SKERNEL's `help` and `list` commands, Symfony Console's `completion` command, and the `--version` option. Binaries are published through this repository's [GitHub Releases](https://github.com/super-kernel/skernel/releases).
+
+## Installation
+
+Download the binary for your platform, one of `linux-x86_64`, `linux-aarch64`, `macos-aarch64`, and `macos-x86_64`, from the [latest release](https://github.com/super-kernel/skernel/releases/latest). It needs no PHP.
+
+```bash
+curl -fsSL -o skernel https://github.com/super-kernel/skernel/releases/latest/download/skernel-linux-x86_64
+chmod +x skernel
+./skernel --version
+```
 
 ## Console
 
@@ -110,9 +120,9 @@ clean [-d|--working-dir=<dir>]
 self-update
 ```
 
-`self-update` replaces a standalone SKERNEL with the binary of the [latest GitHub Release](https://github.com/super-kernel/skernel/releases/latest), named `skernel-<platform>`, such as `skernel-linux-x86_64`. The download is verified against the SHA-256 digest that GitHub reports for it, and the binary keeps its permissions. When the digests match, SKERNEL is up to date and nothing is downloaded.
+`self-update` replaces a standalone SKERNEL with the binary of the [latest GitHub Release](https://github.com/super-kernel/skernel/releases/latest), named `skernel-<platform>`, such as `skernel-linux-x86_64`. The download is verified against the SHA-256 digest that GitHub reports for it, and the binary keeps its permissions. When SKERNEL already has that version, nothing is downloaded; any other version is replaced.
 
-Running from source, a latest release that cannot be read or has no verified binary for the platform, or a binary that cannot be replaced prints a short message on STDERR and exits with status 1. No release has been published yet.
+Running from source, a latest release that cannot be read or has no verified binary for the platform, or a binary that cannot be replaced prints a short message on STDERR and exits with status 1.
 
 ### build
 
@@ -161,12 +171,12 @@ The newest tag is always the [latest release](https://github.com/super-kernel/sk
 
 ## Requirements
 
-- PHP `>=8.4.27 <8.5` with the `openssl`, `pcntl`, `phar`, and `zlib` extensions; Composer checks the required PHP extensions during installation.
+- PHP `>=8.4.27 <8.5` with the `openssl`, `pcntl`, `phar`, and `zlib` extensions, only to run SKERNEL from source; Composer checks the required PHP extensions during installation.
 - Network access and static-php-cli's build tools the first time a managed PHP is built, as described under [Managed PHP](#managed-php).
 
 ## Running from source
 
-Until binaries are published, run SKERNEL from a clone of this repository. SuperKernel detects an application's root from the working directory, so start SKERNEL from its own directory and select the project to work on with `-d`:
+To work on SKERNEL itself, run it from a clone of this repository. SuperKernel detects an application's root from the working directory, so start SKERNEL from its own directory and select the project to work on with `-d`:
 
 ```bash
 git clone https://github.com/super-kernel/skernel.git

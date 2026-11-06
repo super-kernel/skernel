@@ -35,7 +35,7 @@ final class SelfUpdaterTest extends ToolchainTestCase
 
     public function testReplacesTheBinaryAndKeepsItsPermissions(): void
     {
-        self::assertSame('v2.0.0', new SelfUpdater()->install($this->binary, $this->release('new')));
+        self::assertSame('v2.0.0', new SelfUpdater()->install($this->binary, '1.0.0', $this->release()));
 
         self::assertStringEqualsFile($this->binary, 'new');
         clearstatcache();
@@ -43,22 +43,43 @@ final class SelfUpdaterTest extends ToolchainTestCase
         self::assertFalse(is_file($this->binary . '.update'));
     }
 
-    public function testLeavesABinaryThatIsUpToDate(): void
+    public function testLeavesABinaryOfTheLatestVersion(): void
     {
-        $release = $this->release('old');
-        self::assertNotFalse(file_put_contents($this->home . '/asset', 'unexpected'));
+        self::assertNull(new SelfUpdater()->install($this->binary, 'v2.0.0', $this->release()));
+        self::assertStringEqualsFile($this->binary, 'old');
+    }
 
-        self::assertNull(new SelfUpdater()->install($this->binary, $release));
+    public function testReplacesAnyOtherVersionEvenAHigherOne(): void
+    {
+        self::assertSame('v2.0.0', new SelfUpdater()->install($this->binary, 'v3.0.0', $this->release()));
+        self::assertStringEqualsFile($this->binary, 'new');
+    }
+
+    public function testRefusesBeforeDownloadingWhenTheDirectoryCannotBeWritten(): void
+    {
+        $release = $this->release();
+        self::assertNotFalse(file_put_contents($this->home . '/asset', 'tampered'));
+        self::assertTrue(chmod($this->home, 0o555));
+
+        try {
+            new SelfUpdater()->install($this->binary, '1.0.0', $release);
+            self::fail('A binary in a directory that cannot be written must not be replaced.');
+        } catch (RuntimeException $exception) {
+            self::assertSame('Unable to replace ' . $this->binary . '.', $exception->getMessage());
+        } finally {
+            self::assertTrue(chmod($this->home, 0o700));
+        }
+
         self::assertStringEqualsFile($this->binary, 'old');
     }
 
     public function testKeepsTheBinaryWhenTheDownloadDoesNotMatchItsDigest(): void
     {
-        $release = $this->release('new');
+        $release = $this->release();
         self::assertNotFalse(file_put_contents($this->home . '/asset', 'tampered'));
 
         try {
-            new SelfUpdater()->install($this->binary, $release);
+            new SelfUpdater()->install($this->binary, '1.0.0', $release);
             self::fail('A download that does not match its digest must not be installed.');
         } catch (RuntimeException $exception) {
             self::assertStringContainsString('does not match its expected checksum', $exception->getMessage());
@@ -75,7 +96,7 @@ final class SelfUpdaterTest extends ToolchainTestCase
             'The SKERNEL release v2.0.0 has no binary named skernel-' . Platform::current() . '.',
         );
 
-        new SelfUpdater()->install($this->binary, [
+        new SelfUpdater()->install($this->binary, '1.0.0', [
             'tag_name' => 'v2.0.0',
             'assets'   => [
                 [
@@ -92,7 +113,7 @@ final class SelfUpdaterTest extends ToolchainTestCase
             'The SKERNEL release v2.0.0 reports no SHA-256 digest for skernel-' . Platform::current() . '.',
         );
 
-        new SelfUpdater()->install($this->binary, [
+        new SelfUpdater()->install($this->binary, '1.0.0', [
             'tag_name' => 'v2.0.0',
             'assets'   => [
                 [
@@ -104,10 +125,10 @@ final class SelfUpdaterTest extends ToolchainTestCase
         ]);
     }
 
-    /** @return array<string, mixed> A release as the GitHub API describes it, whose asset holds the given contents */
-    private function release(string $contents): array
+    /** @return array<string, mixed> A release as the GitHub API describes it, whose asset holds "new" */
+    private function release(): array
     {
-        self::assertNotFalse(file_put_contents($this->home . '/asset', $contents));
+        self::assertNotFalse(file_put_contents($this->home . '/asset', 'new'));
 
         return [
             'tag_name' => 'v2.0.0',
@@ -115,7 +136,7 @@ final class SelfUpdaterTest extends ToolchainTestCase
                 [
                     'name'                 => 'skernel-' . Platform::current(),
                     'browser_download_url' => 'file://' . $this->home . '/asset',
-                    'digest'               => 'sha256:' . hash('sha256', $contents),
+                    'digest'               => 'sha256:' . hash('sha256', 'new'),
                 ],
             ],
         ];

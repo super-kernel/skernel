@@ -9,12 +9,12 @@ use Src\Toolchain\Platform;
 use Symfony\Component\Console\Exception\RuntimeException;
 
 use function chmod;
+use function dirname;
 use function fileperms;
-use function hash_equals;
-use function hash_file;
 use function is_array;
 use function is_file;
 use function is_string;
+use function is_writable;
 use function json_decode;
 use function rename;
 use function sprintf;
@@ -26,9 +26,9 @@ use function unlink;
 /**
  * Replaces the running SKERNEL binary with the one of the latest GitHub Release.
  *
- * A release has one asset per platform, named `skernel-<platform>`, or `skernel-<platform>.exe` on Windows. The digest
- * that GitHub reports for the asset verifies the download and tells whether the binary is up to date already, so
- * SKERNEL does not have to know its own version.
+ * A release has one asset per platform, named `skernel-<platform>`, or `skernel-<platform>.exe` on Windows, and the
+ * digest that GitHub reports for the asset verifies the download. Any version other than the latest release's is
+ * replaced. A micro runtime reads only the appended PHAR of its own file, so the binary cannot hash itself to compare.
  */
 final class SelfUpdater
 {
@@ -37,12 +37,14 @@ final class SelfUpdater
     private const string DIGEST_PREFIX = 'sha256:';
 
     /**
+     * @param string $version The version of the running binary
+     *
      * @return string|null The tag of the installed release, or null when the binary is up to date already
      *
      * @throws RuntimeException When the latest release cannot be read or has no verified binary for this platform, or
      *                          the binary cannot be replaced
      */
-    public function update(string $binary): ?string
+    public function update(string $binary, string $version): ?string
     {
         try {
             $release = json_decode(Download::contents(self::LATEST_RELEASE), true);
@@ -50,10 +52,11 @@ final class SelfUpdater
             throw new RuntimeException('Unable to read the latest SKERNEL release from GitHub.', 0, $exception);
         }
 
-        return $this->install($binary, is_array($release) ? $release : []);
+        return $this->install($binary, $version, is_array($release) ? $release : []);
     }
 
     /**
+     * @param string                  $version The version of the running binary
      * @param array<array-key, mixed> $release A release as the GitHub API describes it
      *
      * @return string|null The tag of the installed release, or null when the binary is up to date already
@@ -61,11 +64,16 @@ final class SelfUpdater
      * @throws RuntimeException When the release has no verified binary for this platform, or the binary cannot be
      *                          replaced
      */
-    public function install(string $binary, array $release): ?string
+    public function install(string $binary, string $version, array $release): ?string
     {
         $platform = Platform::current();
         $name = 'skernel-' . $platform . (str_starts_with($platform, 'windows-') ? '.exe' : '');
         $tag = is_string($release['tag_name'] ?? null) ? $release['tag_name'] : 'unknown';
+
+        if ($tag === $version) {
+            return null;
+        }
+
         $asset = null;
 
         foreach (is_array($release['assets'] ?? null) ? $release['assets'] : [] as $candidate) {
@@ -87,16 +95,14 @@ final class SelfUpdater
             );
         }
 
-        $sha256 = substr($digest, strlen(self::DIGEST_PREFIX));
-
-        if (hash_equals($sha256, (string) hash_file('sha256', $binary))) {
-            return null;
+        if (!is_writable(dirname($binary))) {
+            throw new RuntimeException(sprintf('Unable to replace %s.', $binary));
         }
 
         $staged = $binary . '.update';
 
         try {
-            Download::file($url, $staged, $sha256);
+            Download::file($url, $staged, substr($digest, strlen(self::DIGEST_PREFIX)));
 
             if (!@chmod($staged, fileperms($binary) & 0o777) || !@rename($staged, $binary)) {
                 throw new RuntimeException(sprintf('Unable to replace %s.', $binary));
