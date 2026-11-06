@@ -4,7 +4,7 @@
 
 # SKERNEL
 
-`super-kernel/skernel` 即 SKERNEL，是 SuperKernel 应用的命令行项目工具，作用相当于 Java 项目中的 Maven。它本身也是用 SuperKernel 构建的控制台应用，计划以独立的二进制文件发布。
+`super-kernel/skernel` 即 SKERNEL，是 SuperKernel 应用的命令行项目工具，作用相当于 Java 项目中的 Maven。它本身也是用 SuperKernel 构建的控制台应用，以独立的二进制文件发布。
 
 > [!NOTE]
 > SKERNEL 仍在积极开发中。目前提供 `new`、`run`、`build`、`package`、`clean` 和 `self-update` 命令。控制台另有 SKERNEL 自己的 `help` 和 `list` 命令、Symfony Console 的 `completion` 命令，以及 `--version` 选项。二进制文件通过本仓库的 [GitHub Releases](https://github.com/super-kernel/skernel/releases) 发布。
